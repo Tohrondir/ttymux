@@ -39,7 +39,7 @@ export function SidebarPortItem({ port, selected }: { port: PortInfo; selected: 
           selected ? 'bg-panel-raised' : 'hover:bg-panel-raised'
         }`}
       >
-        <StatusDot status={port.status} showLabel={false} />
+        <StatusDot status={port.status} hasWriter={port.writer !== null} showLabel={false} />
 
         {editing ? (
           <div className="min-w-0 flex-1">

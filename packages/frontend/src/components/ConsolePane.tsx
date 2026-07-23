@@ -18,7 +18,6 @@ export function ConsolePane({ portId }: { portId: string }) {
     isWriter,
     controlDeniedReason,
     requestControl,
-    releaseControl,
     changeSettings,
     setFreeForAll,
     sendInput,
@@ -40,7 +39,7 @@ export function ConsolePane({ portId }: { portId: string }) {
           <p className="truncate font-mono text-xs text-fog">{portId}</p>
         </div>
         <div className="flex shrink-0 items-center gap-4 text-xs text-fog">
-          {port && <StatusDot status={port.status} />}
+          {port && <StatusDot status={port.status} hasWriter={port.writer !== null} />}
           <span title={viewers.map((v) => v.displayName ?? 'Anonymous').join(', ')}>
             {viewers.length} {viewers.length === 1 ? 'viewer' : 'viewers'}
           </span>
@@ -64,7 +63,6 @@ export function ConsolePane({ portId }: { portId: string }) {
         isWriter={isWriter}
         deniedReason={controlDeniedReason}
         onRequestControl={requestControl}
-        onReleaseControl={releaseControl}
         onToggleFreeForAll={setFreeForAll}
       />
 

@@ -5,18 +5,10 @@ export interface WriterBannerProps {
   isWriter: boolean;
   deniedReason: string | null;
   onRequestControl: () => void;
-  onReleaseControl: () => void;
   onToggleFreeForAll: (enabled: boolean) => void;
 }
 
-export function WriterBanner({
-  writeToken,
-  isWriter,
-  deniedReason,
-  onRequestControl,
-  onReleaseControl,
-  onToggleFreeForAll,
-}: WriterBannerProps) {
+export function WriterBanner({ writeToken, isWriter, deniedReason, onRequestControl, onToggleFreeForAll }: WriterBannerProps) {
   const canType = isWriter || writeToken.freeForAll;
 
   return (
@@ -52,24 +44,15 @@ export function WriterBanner({
           />
           Free-for-all
         </label>
-        {!writeToken.freeForAll &&
-          (isWriter ? (
-            <button
-              type="button"
-              onClick={onReleaseControl}
-              className="rounded-md border border-line px-3 py-1 text-xs text-paper transition-colors hover:border-signal-dim"
-            >
-              Release control
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={onRequestControl}
-              className="rounded-md bg-signal px-3 py-1 text-xs font-medium text-ink transition-[filter] hover:brightness-110"
-            >
-              Take control
-            </button>
-          ))}
+        {!writeToken.freeForAll && !isWriter && (
+          <button
+            type="button"
+            onClick={onRequestControl}
+            className="rounded-md bg-signal px-3 py-1 text-xs font-medium text-ink transition-[filter] hover:brightness-110"
+          >
+            Take control
+          </button>
+        )}
       </div>
     </div>
   );

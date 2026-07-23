@@ -14,7 +14,6 @@ export interface UseConsoleSocketResult {
   isWriter: boolean;
   controlDeniedReason: string | null;
   requestControl: () => void;
-  releaseControl: () => void;
   changeSettings: (settings: Partial<SerialSettings>) => void;
   setFreeForAll: (enabled: boolean) => void;
   sendInput: (data: Uint8Array) => void;
@@ -94,7 +93,6 @@ export function useConsoleSocket(portId: string, dataHandlers: ConsoleDataHandle
     isWriter: writeToken.holder === clientId,
     controlDeniedReason,
     requestControl: () => handleRef.current?.send({ type: 'requestControl' }),
-    releaseControl: () => handleRef.current?.send({ type: 'releaseControl' }),
     changeSettings: (settings) => handleRef.current?.send({ type: 'changeSettings', settings }),
     setFreeForAll: (enabled) => handleRef.current?.send({ type: 'setFreeForAll', enabled }),
     sendInput: (data) => handleRef.current?.send({ type: 'input', dataBase64: bytesToBase64(data) }),
