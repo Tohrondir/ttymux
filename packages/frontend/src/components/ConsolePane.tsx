@@ -47,9 +47,12 @@ export function ConsolePane({ portId }: { portId: string }) {
           {!connected && <span className="text-status-error">Reconnecting&hellip;</span>}
           <button
             type="button"
-            onClick={() => setSettingsOpen(true)}
+            onClick={() => setSettingsOpen((open) => !open)}
             aria-label="Connection settings"
-            className="inline-flex items-center justify-center rounded-md border border-line px-2 py-1 text-fog transition-colors hover:border-signal-dim hover:text-paper"
+            aria-pressed={settingsOpen}
+            className={`inline-flex items-center justify-center rounded-md border px-2 py-1 transition-colors ${
+              settingsOpen ? 'border-signal-dim text-paper' : 'border-line text-fog hover:border-signal-dim hover:text-paper'
+            }`}
           >
             &#9881;
           </button>
