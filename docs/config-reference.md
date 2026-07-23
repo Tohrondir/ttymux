@@ -139,6 +139,13 @@ or `GET /api/ports` for a port you've already plugged in:
 | `defaultSettings` | Baud/data bits/stop bits/parity/flow control applied the first time this port is opened. Anyone can change settings live from the console view afterward. |
 | `hidden` | Excludes the port from the dashboard and `GET /api/ports` listing entirely. It's still reachable directly by id (e.g. a bookmarked console URL) — this is a declutter option, not an access control. |
 
+`name` and `group` can also be set from the UI (hover a port in the sidebar
+for the rename icon) via `PATCH /api/ports/:id`. UI renames are **in-memory
+only** — they last for as long as the server process runs, but don't get
+written back to this file, so a restart reverts to whatever's configured
+here (or the auto-discovered name, if nothing is). Set `name`/`group` here
+instead for names that need to survive a restart.
+
 ## Docker device access
 
 Containers don't see host devices by default. The simplest option is
