@@ -1,5 +1,5 @@
 {
-  "name": "@ttymux/backend",
+  "name": "ttymux",
   "version": "0.1.0",
   "private": true,
   "license": "MIT",
