@@ -46,6 +46,11 @@ export const configSchema = z.object({
       bytes: z.number().int().positive().optional(),
     })
     .optional(),
+  discovery: z
+    .object({
+      includeLegacyPorts: z.boolean().optional(),
+    })
+    .optional(),
   ports: z.record(portOverrideSchema).optional(),
 });
 

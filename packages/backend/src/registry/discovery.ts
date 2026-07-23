@@ -38,13 +38,31 @@ function buildSymlinkMap(dir: string): Map<string, string> {
   return map;
 }
 
-export async function listRawPorts(): Promise<PortDescriptor[]> {
+const LEGACY_TTY_PATTERN = /^\/dev\/ttyS\d+$/;
+
+/**
+ * Linux always exposes /dev/ttyS0..31 for legacy 8250/16550 UART headers,
+ * almost none of which are wired to real hardware on modern machines —
+ * opening them fails immediately. Excluded by default so discovery reflects
+ * actual USB/serial devices; set discovery.includeLegacyPorts to include them.
+ */
+export function isLikelyPhantomLegacyPort(path: string): boolean {
+  return platform() === 'linux' && LEGACY_TTY_PATTERN.test(path);
+}
+
+export interface ListRawPortsOptions {
+  includeLegacyPorts?: boolean;
+}
+
+export async function listRawPorts(opts: ListRawPortsOptions = {}): Promise<PortDescriptor[]> {
   const raw = await SerialPort.list();
 
   const byIdMap = platform() === 'linux' ? buildSymlinkMap(BY_ID_DIR) : new Map<string, string>();
   const byPathMap = platform() === 'linux' ? buildSymlinkMap(BY_PATH_DIR) : new Map<string, string>();
 
-  return raw.map((entry) => {
+  const filtered = opts.includeLegacyPorts ? raw : raw.filter((entry) => !isLikelyPhantomLegacyPort(entry.path));
+
+  return filtered.map((entry) => {
     let resolvedPath = entry.path;
     try {
       resolvedPath = realpathSync(entry.path);

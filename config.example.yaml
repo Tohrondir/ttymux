@@ -43,6 +43,13 @@ scrollback:
   # the moment they attach to a console.
   bytes: 200000
 
+discovery:
+  # Linux always exposes /dev/ttyS0..31 for legacy motherboard UART headers,
+  # almost never wired to real hardware on modern machines -- opening them
+  # fails immediately. Excluded by default. Set true if you have genuine
+  # hardware on one of these (e.g. an industrial PC with a real RS-232 port).
+  includeLegacyPorts: false
+
 # Per-port overrides, layered on top of auto-discovery. Keyed by the port's
 # stable id -- see the "id" field returned by GET /api/ports, or the
 # dashboard card for a port you've already plugged in. Ports with no entry
