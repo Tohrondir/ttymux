@@ -7,7 +7,7 @@ export type PortLister = () => Promise<PortDescriptor[]>;
 export interface PortRegistry {
   on(event: 'added', listener: (descriptor: PortDescriptor) => void): this;
   on(event: 'removed', listener: (portId: PortId) => void): this;
-  off(event: 'added' | 'removed', listener: (...args: any[]) => void): this;
+  off(event: 'added' | 'removed', listener: (...args: unknown[]) => void): this;
 }
 
 /**
