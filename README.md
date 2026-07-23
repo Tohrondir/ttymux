@@ -58,6 +58,12 @@ broader access via `--device-cgroup-rule` / mounting `/dev` for dynamically
 appearing devices. See [docs/config-reference.md](docs/config-reference.md)
 for details.
 
+### Running as a service
+
+For a persistent install on a shared host, see the example systemd unit at
+[docs/systemd/ttymux.service](docs/systemd/ttymux.service) (optional — not a
+hard dependency).
+
 ## Supported platforms
 
 Linux, macOS, and Windows — anywhere Node.js and the [`serialport`](https://serialport.io/)

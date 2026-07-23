@@ -1,0 +1,38 @@
+# Example systemd unit for running ttymux as a service. Not required to use
+# ttymux — `npx ttymux` works fine for ad hoc/interactive use. This is for
+# anyone who wants it running persistently on a shared lab/rack host.
+#
+# Setup:
+#   sudo useradd --system --home /opt/ttymux --groups dialout ttymux
+#   sudo mkdir -p /opt/ttymux /etc/ttymux
+#   sudo npm install --prefix /opt/ttymux ttymux
+#   sudo cp config.example.yaml /etc/ttymux/ttymux.config.yaml   # edit as needed
+#   sudo chown -R ttymux:ttymux /opt/ttymux
+#   sudo cp docs/systemd/ttymux.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now ttymux
+#
+# The `dialout` group grants access to /dev/ttyUSB*, /dev/ttyACM*, etc. on
+# most Linux distributions — adjust if yours uses a different group.
+
+[Unit]
+Description=ttymux serial console dashboard
+After=network.target
+
+[Service]
+Type=simple
+User=ttymux
+Group=dialout
+WorkingDirectory=/opt/ttymux
+ExecStart=/usr/bin/node /opt/ttymux/node_modules/ttymux/dist/index.js start --config /etc/ttymux/ttymux.config.yaml
+Restart=on-failure
+RestartSec=2
+
+# Hardening (relax if it conflicts with your setup, e.g. log directory location)
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/opt/ttymux
+
+[Install]
+WantedBy=multi-user.target
