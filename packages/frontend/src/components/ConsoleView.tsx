@@ -1,21 +1,35 @@
-import { useRef } from 'react';
+import { useState, useRef } from 'react';
+import { DEFAULT_SERIAL_SETTINGS } from '@ttymux/shared';
 import { useConsoleSocket } from '../hooks/useConsoleSocket.js';
 import { navigate } from '../hooks/useRoute.js';
+import { SettingsPanel } from './SettingsPanel.js';
 import { StatusDot } from './StatusDot.js';
 import { Terminal, type TerminalHandle } from './Terminal.js';
 import { WriterBanner } from './WriterBanner.js';
 
 export function ConsoleView({ portId }: { portId: string }) {
   const terminalRef = useRef<TerminalHandle | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const { connected, port, viewers, writeToken, isWriter, controlDeniedReason, requestControl, releaseControl, setFreeForAll, sendInput } =
-    useConsoleSocket(portId, {
-      onScrollback: (bytes) => {
-        terminalRef.current?.clear();
-        terminalRef.current?.write(bytes);
-      },
-      onOutput: (bytes) => terminalRef.current?.write(bytes),
-    });
+  const {
+    connected,
+    port,
+    viewers,
+    writeToken,
+    isWriter,
+    controlDeniedReason,
+    requestControl,
+    releaseControl,
+    changeSettings,
+    setFreeForAll,
+    sendInput,
+  } = useConsoleSocket(portId, {
+    onScrollback: (bytes) => {
+      terminalRef.current?.clear();
+      terminalRef.current?.write(bytes);
+    },
+    onOutput: (bytes) => terminalRef.current?.write(bytes),
+  });
 
   const canType = isWriter || writeToken.freeForAll;
 
@@ -41,6 +55,14 @@ export function ConsoleView({ portId }: { portId: string }) {
             {viewers.length} {viewers.length === 1 ? 'viewer' : 'viewers'}
           </span>
           {!connected && <span className="text-status-error">Reconnecting&hellip;</span>}
+          <button
+            type="button"
+            onClick={() => setSettingsOpen(true)}
+            aria-label="Connection settings"
+            className="rounded-md border border-line px-2 py-1 text-fog transition-colors hover:border-signal-dim hover:text-paper"
+          >
+            &#9881;
+          </button>
         </div>
       </header>
 
@@ -53,8 +75,15 @@ export function ConsoleView({ portId }: { portId: string }) {
         onToggleFreeForAll={setFreeForAll}
       />
 
-      <div className="min-h-0 flex-1 p-2">
+      <div className="relative min-h-0 flex-1 p-2">
         <Terminal ref={terminalRef} readOnly={!canType} onInput={sendInput} />
+        <SettingsPanel
+          open={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+          settings={port?.settings ?? DEFAULT_SERIAL_SETTINGS}
+          canEdit={canType}
+          onChange={changeSettings}
+        />
       </div>
     </div>
   );
