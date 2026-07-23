@@ -8,8 +8,7 @@ of SSHing in to run `screen`/`minicom`/`picocom` by hand.
 Built for embedded development, networking gear, IoT, and lab equipment,
 where a serial console is still the only way in.
 
-![ttymux dashboard screenshot](docs/screenshot.png)
-<!-- maintainers: replace docs/screenshot.png with a real screenshot before release -->
+![ttymux sidebar and console view](docs/screenshot.png)
 
 ## Features
 
