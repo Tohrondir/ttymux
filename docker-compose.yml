@@ -1,0 +1,31 @@
+services:
+  ttymux:
+    build: .
+    image: ttymux
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+
+    # Grants the container permission to open USB serial devices without
+    # --privileged or a static --device flag per port. Major numbers:
+    #   188 = ttyUSB (FTDI/CP210x/CH340/PL2303 USB-serial adapters)
+    #   166 = ttyACM (USB CDC-ACM, e.g. most Arduinos)
+    device_cgroup_rules:
+      - "c 188:* rmw"
+      - "c 166:* rmw"
+
+    # The rule above only grants *permission* -- the device nodes still need
+    # to be visible inside the container, hence bind-mounting /dev. This also
+    # means newly plugged-in devices are picked up without restarting the
+    # container (no need to edit this file when you plug in a new adapter).
+    volumes:
+      - /dev:/dev
+      - ./logs:/app/logs
+      # Uncomment to use a config file (see config.example.yaml):
+      # - ./ttymux.config.yaml:/app/ttymux.config.yaml:ro
+
+    # More restrictive alternative to device_cgroup_rules + the /dev mount
+    # above: list only the specific devices you want the container to see.
+    # You'll need to add a line here each time you attach a different device.
+    # devices:
+    #   - /dev/ttyUSB0:/dev/ttyUSB0

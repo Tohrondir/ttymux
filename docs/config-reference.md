@@ -141,7 +141,13 @@ or `GET /api/ports` for a port you've already plugged in:
 
 ## Docker device access
 
-Containers don't see host devices by default. Grant access to a specific
+Containers don't see host devices by default. The simplest option is
+[docker-compose.yml](../docker-compose.yml) — `docker compose up -d` grants
+access to whole classes of USB serial devices via `device_cgroup_rules` plus
+a `/dev` bind mount, so devices plugged in after the container starts are
+picked up automatically, without editing the file or restarting.
+
+With plain `docker run`, grant access to one specific, already-connected
 device:
 
 ```sh
@@ -150,9 +156,10 @@ docker run --device=/dev/ttyUSB0 -p 9000:9000 ttymux
 
 Repeat `--device` for multiple known devices, or use
 `--device-cgroup-rule='c 188:* rmw'` (adjust the major number for your
-device class) to allow a whole class of devices including ones that appear
-after the container starts. On Linux hosts without Docker, add your user to
-the `dialout` group instead of using `sudo`:
+device class — see the comments in docker-compose.yml) to allow a whole
+class of devices including ones that appear after the container starts. On
+Linux hosts without Docker, add your user to the `dialout` group instead of
+using `sudo`:
 
 ```sh
 sudo usermod -aG dialout $USER

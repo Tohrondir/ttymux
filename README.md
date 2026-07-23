@@ -49,14 +49,22 @@ sudo usermod -aG dialout $USER
 ### Docker
 
 ```sh
+docker compose up -d
+```
+
+The included [docker-compose.yml](docker-compose.yml) grants access to USB
+serial devices via `device_cgroup_rules` + a `/dev` bind mount, so newly
+plugged-in devices are picked up without editing the file or restarting the
+container. If you'd rather grant access to one specific device instead,
+comment that out and uncomment the `devices:` line, or use plain `docker run`:
+
+```sh
 docker build -t ttymux .
 docker run --device=/dev/ttyUSB0 -p 9000:9000 ttymux
 ```
 
-Docker needs explicit access to each serial device via `--device`, or
-broader access via `--device-cgroup-rule` / mounting `/dev` for dynamically
-appearing devices. See [docs/config-reference.md](docs/config-reference.md)
-for details.
+See [docs/config-reference.md](docs/config-reference.md) for more on device
+access options.
 
 ### Running as a service
 
