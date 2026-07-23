@@ -7,12 +7,12 @@ const STATUS_META: Record<PortConnectionStatus, { dot: string; label: string; pu
   error: { dot: 'bg-status-error', label: 'Error' },
 };
 
-export function StatusDot({ status }: { status: PortConnectionStatus }) {
+export function StatusDot({ status, showLabel = true }: { status: PortConnectionStatus; showLabel?: boolean }) {
   const meta = STATUS_META[status];
   return (
-    <span className="inline-flex shrink-0 items-center gap-1.5">
+    <span className="inline-flex shrink-0 items-center gap-1.5" title={meta.label}>
       <span className={`h-2 w-2 rounded-full ${meta.dot} ${meta.pulse ? 'led-pulse' : ''}`} aria-hidden="true" />
-      <span className="text-xs text-fog">{meta.label}</span>
+      {showLabel && <span className="text-xs text-fog">{meta.label}</span>}
     </span>
   );
 }

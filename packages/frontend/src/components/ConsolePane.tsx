@@ -1,13 +1,12 @@
 import { useState, useRef } from 'react';
 import { DEFAULT_SERIAL_SETTINGS } from '@ttymux/shared';
 import { useConsoleSocket } from '../hooks/useConsoleSocket.js';
-import { navigate } from '../hooks/useRoute.js';
 import { SettingsPanel } from './SettingsPanel.js';
 import { StatusDot } from './StatusDot.js';
 import { Terminal, type TerminalHandle } from './Terminal.js';
 import { WriterBanner } from './WriterBanner.js';
 
-export function ConsoleView({ portId }: { portId: string }) {
+export function ConsolePane({ portId }: { portId: string }) {
   const terminalRef = useRef<TerminalHandle | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -36,18 +35,9 @@ export function ConsoleView({ portId }: { portId: string }) {
   return (
     <div className="flex h-screen flex-col bg-ink">
       <header className="flex items-center justify-between gap-4 border-b border-line px-4 py-3">
-        <div className="flex min-w-0 items-center gap-3">
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            className="shrink-0 rounded-md border border-line px-2 py-1 text-xs text-fog transition-colors hover:border-signal-dim hover:text-paper"
-          >
-            &larr; Dashboard
-          </button>
-          <div className="min-w-0">
-            <h1 className="truncate text-sm font-medium text-paper">{port?.friendlyName ?? port?.path ?? portId}</h1>
-            <p className="truncate font-mono text-xs text-fog">{portId}</p>
-          </div>
+        <div className="min-w-0">
+          <h1 className="truncate text-sm font-medium text-paper">{port?.friendlyName ?? port?.path ?? portId}</h1>
+          <p className="truncate font-mono text-xs text-fog">{portId}</p>
         </div>
         <div className="flex shrink-0 items-center gap-4 text-xs text-fog">
           {port && <StatusDot status={port.status} />}
@@ -59,7 +49,7 @@ export function ConsoleView({ portId }: { portId: string }) {
             type="button"
             onClick={() => setSettingsOpen(true)}
             aria-label="Connection settings"
-            className="rounded-md border border-line px-2 py-1 text-fog transition-colors hover:border-signal-dim hover:text-paper"
+            className="inline-flex items-center justify-center rounded-md border border-line px-2 py-1 text-fog transition-colors hover:border-signal-dim hover:text-paper"
           >
             &#9881;
           </button>

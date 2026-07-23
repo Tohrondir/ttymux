@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 
-export type Route = { name: 'dashboard' } | { name: 'console'; portId: string };
+export type Route = { name: 'none' } | { name: 'console'; portId: string };
 
 function parseRoute(pathname: string): Route {
   const match = pathname.match(/^\/console\/(.+)$/);
   if (match) return { name: 'console', portId: decodeURIComponent(match[1]) };
-  return { name: 'dashboard' };
+  return { name: 'none' };
 }
 
 export function navigate(pathname: string): void {
@@ -13,7 +13,7 @@ export function navigate(pathname: string): void {
   window.dispatchEvent(new PopStateEvent('popstate'));
 }
 
-/** Minimal pushState router — the app only ever has two destinations, so no router dependency is warranted. */
+/** Minimal pushState router — selects which console (if any) shows in the main pane; the sidebar itself never navigates away. */
 export function useRoute(): Route {
   const [route, setRoute] = useState<Route>(() => parseRoute(window.location.pathname));
 

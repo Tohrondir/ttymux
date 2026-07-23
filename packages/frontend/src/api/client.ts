@@ -7,6 +7,7 @@ import type {
   GetPortsResponse,
   GetServerInfoResponse,
   PortInfo,
+  UpdatePortRequest,
 } from '@ttymux/shared';
 
 const TOKEN_STORAGE_KEY = 'ttymux.token';
@@ -30,11 +31,11 @@ export function setAuthToken(token: string | null): void {
   else sessionStorage.removeItem(TOKEN_STORAGE_KEY);
 }
 
-async function apiFetch<T>(path: string): Promise<T> {
-  const headers: Record<string, string> = {};
+async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const headers: Record<string, string> = { ...(init.headers as Record<string, string> | undefined) };
   if (authToken) headers.Authorization = `Bearer ${authToken}`;
 
-  const response = await fetch(path, { headers });
+  const response = await fetch(path, { ...init, headers });
 
   if (response.status === 401) throw new AuthRequiredError();
   if (!response.ok) {
@@ -50,6 +51,15 @@ export const api = {
   },
   async getPort(id: string): Promise<PortInfo> {
     return (await apiFetch<GetPortResponse>(`/api/ports/${encodeURIComponent(id)}`)).port;
+  },
+  async updatePort(id: string, body: UpdatePortRequest): Promise<PortInfo> {
+    return (
+      await apiFetch<GetPortResponse>(`/api/ports/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+    ).port;
   },
   async getServerInfo(): Promise<GetServerInfoResponse> {
     return apiFetch<GetServerInfoResponse>('/api/server-info');
