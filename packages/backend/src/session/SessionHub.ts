@@ -17,11 +17,6 @@ interface ConsoleState {
   writeToken: WriteTokenState;
 }
 
-export interface ControlResult {
-  granted: boolean;
-  reason?: string;
-}
-
 export interface SessionHub {
   /** Fires whenever viewer count or write-token state changes for a console — the dashboard's live view hooks in here. */
   on(event: 'changed', listener: (portId: PortId) => void): this;
@@ -68,18 +63,15 @@ export class SessionHub extends EventEmitter {
     this.emit('changed', portId);
   }
 
-  requestControl(portId: PortId, clientId: string): ControlResult {
+  /** Always succeeds, taking over from whoever currently holds it — no need for the previous holder to release first. */
+  requestControl(portId: PortId, clientId: string): void {
     const state = this.getOrCreate(portId);
-    if (state.writeToken.holder && state.writeToken.holder !== clientId) {
-      return { granted: false, reason: `Console is controlled by ${state.writeToken.holderName ?? 'another user'}` };
-    }
     const client = state.viewers.get(clientId)?.client;
     state.writeToken.holder = clientId;
     state.writeToken.holderName = client?.displayName;
     state.writeToken.since = new Date().toISOString();
     this.broadcastWriteToken(portId);
     this.emit('changed', portId);
-    return { granted: true };
   }
 
   releaseControl(portId: PortId, clientId: string): void {

@@ -34,51 +34,50 @@ describe('SessionHub write-token arbitration', () => {
     expect(hub.canWrite('p1', 'a')).toBe(true);
   });
 
-  it('grants control to the first requester and denies a second', () => {
+  it('requestControl always succeeds, taking over from whoever currently holds it', () => {
     const hub = new SessionHub();
-    hub.attach('p1', makeClient('a'));
+    hub.attach('p1', makeClient('a')); // 'a' auto-holds it as the first viewer
     hub.attach('p1', makeClient('b'));
-
-    expect(hub.requestControl('p1', 'a').granted).toBe(true);
-
-    const resultB = hub.requestControl('p1', 'b');
-    expect(resultB.granted).toBe(false);
-    expect(resultB.reason).toContain('a');
 
     expect(hub.canWrite('p1', 'a')).toBe(true);
     expect(hub.canWrite('p1', 'b')).toBe(false);
+
+    // 'b' takes over without 'a' releasing first.
+    hub.requestControl('p1', 'b');
+
+    expect(hub.getWriteTokenState('p1').holder).toBe('b');
+    expect(hub.canWrite('p1', 'a')).toBe(false);
+    expect(hub.canWrite('p1', 'b')).toBe(true);
   });
 
-  it('lets the current holder release control, freeing it for others', () => {
+  it('lets the current holder release control, going back to unclaimed', () => {
     const hub = new SessionHub();
     hub.attach('p1', makeClient('a'));
     hub.attach('p1', makeClient('b'));
-    hub.requestControl('p1', 'a');
 
     hub.releaseControl('p1', 'a');
 
+    expect(hub.getWriteTokenState('p1').holder).toBeNull();
     expect(hub.canWrite('p1', 'a')).toBe(false);
-    expect(hub.requestControl('p1', 'b').granted).toBe(true);
-    expect(hub.canWrite('p1', 'b')).toBe(true);
+    expect(hub.canWrite('p1', 'b')).toBe(false);
   });
 
   it('auto-releases the token when the holder disconnects', () => {
     const hub = new SessionHub();
     hub.attach('p1', makeClient('a'));
     hub.attach('p1', makeClient('b'));
-    hub.requestControl('p1', 'a');
 
     hub.detach('p1', 'a');
 
     expect(hub.getWriteTokenState('p1').holder).toBeNull();
-    expect(hub.requestControl('p1', 'b').granted).toBe(true);
+    hub.requestControl('p1', 'b');
+    expect(hub.getWriteTokenState('p1').holder).toBe('b');
   });
 
   it('a non-holder releasing control is a no-op', () => {
     const hub = new SessionHub();
     hub.attach('p1', makeClient('a'));
     hub.attach('p1', makeClient('b'));
-    hub.requestControl('p1', 'a');
 
     hub.releaseControl('p1', 'b');
 
@@ -89,7 +88,6 @@ describe('SessionHub write-token arbitration', () => {
     const hub = new SessionHub();
     hub.attach('p1', makeClient('a'));
     hub.attach('p1', makeClient('b'));
-    hub.requestControl('p1', 'a');
 
     expect(hub.canWrite('p1', 'b')).toBe(false);
 
@@ -103,7 +101,6 @@ describe('SessionHub write-token arbitration', () => {
     const hub = new SessionHub();
     hub.attach('p1', makeClient('a'));
     hub.attach('p1', makeClient('b'));
-    hub.releaseControl('p1', 'a'); // 'a' auto-holds it as the first viewer — free it up first
     hub.requestControl('p1', 'b');
 
     const viewers = hub.getViewers('p1');
@@ -111,14 +108,13 @@ describe('SessionHub write-token arbitration', () => {
     expect(viewers.find((v) => v.clientId === 'b')?.isWriter).toBe(true);
   });
 
-  it('a client already holding the token can re-request without being denied', () => {
+  it('a client already holding the token can re-request without any change', () => {
     const hub = new SessionHub();
     hub.attach('p1', makeClient('a'));
 
     hub.requestControl('p1', 'a');
-    const again = hub.requestControl('p1', 'a');
 
-    expect(again.granted).toBe(true);
+    expect(hub.getWriteTokenState('p1').holder).toBe('a');
   });
 
   it('consoles are independent: holding the token on one port has no effect on another', () => {

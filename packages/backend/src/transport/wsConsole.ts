@@ -82,11 +82,9 @@ function handleClientMessage(
       break;
     }
 
-    case 'requestControl': {
-      const result = deps.sessionHub.requestControl(portId, clientId);
-      if (!result.granted) client.send({ type: 'controlDenied', reason: result.reason ?? 'Control unavailable' });
+    case 'requestControl':
+      deps.sessionHub.requestControl(portId, clientId);
       break;
-    }
 
     case 'releaseControl':
       deps.sessionHub.releaseControl(portId, clientId);
