@@ -1,4 +1,4 @@
-import type { ConsoleServerMessage, PortId, ViewerInfo, WriteTokenState } from '@ttymux/shared';
+import type { ConsoleServerMessage, PortId, PortInfo, ViewerInfo, WriteTokenState } from '@ttymux/shared';
 
 export interface ClientHandle {
   clientId: string;
@@ -6,8 +6,13 @@ export interface ClientHandle {
   send(message: ConsoleServerMessage): void;
 }
 
+interface ViewerEntry {
+  client: ClientHandle;
+  connectedAt: string;
+}
+
 interface ConsoleState {
-  viewers: Map<string, ClientHandle & { connectedAt: string }>;
+  viewers: Map<string, ViewerEntry>;
   writeToken: WriteTokenState;
 }
 
@@ -26,7 +31,7 @@ export class SessionHub {
 
   attach(portId: PortId, client: ClientHandle): void {
     const state = this.getOrCreate(portId);
-    state.viewers.set(client.clientId, { ...client, connectedAt: new Date().toISOString() });
+    state.viewers.set(client.clientId, { client, connectedAt: new Date().toISOString() });
     this.broadcastViewers(portId);
   }
 
@@ -46,7 +51,7 @@ export class SessionHub {
     if (state.writeToken.holder && state.writeToken.holder !== clientId) {
       return { granted: false, reason: `Console is controlled by ${state.writeToken.holderName ?? 'another user'}` };
     }
-    const client = state.viewers.get(clientId);
+    const client = state.viewers.get(clientId)?.client;
     state.writeToken.holder = clientId;
     state.writeToken.holderName = client?.displayName;
     state.writeToken.since = new Date().toISOString();
@@ -82,10 +87,10 @@ export class SessionHub {
     const state = this.consoles.get(portId);
     if (!state) return [];
     return [...state.viewers.values()].map((v) => ({
-      clientId: v.clientId,
-      displayName: v.displayName,
+      clientId: v.client.clientId,
+      displayName: v.client.displayName,
       connectedAt: v.connectedAt,
-      isWriter: state.writeToken.holder === v.clientId,
+      isWriter: state.writeToken.holder === v.client.clientId,
     }));
   }
 
@@ -97,7 +102,14 @@ export class SessionHub {
     const state = this.consoles.get(portId);
     if (!state || state.viewers.size === 0) return;
     const message: ConsoleServerMessage = { type: 'output', dataBase64: chunk.toString('base64') };
-    for (const viewer of state.viewers.values()) viewer.send(message);
+    for (const viewer of state.viewers.values()) viewer.client.send(message);
+  }
+
+  broadcastStatus(portId: PortId, port: PortInfo): void {
+    const state = this.consoles.get(portId);
+    if (!state) return;
+    const message: ConsoleServerMessage = { type: 'status', port };
+    for (const viewer of state.viewers.values()) viewer.client.send(message);
   }
 
   private getOrCreate(portId: PortId): ConsoleState {
@@ -119,14 +131,14 @@ export class SessionHub {
     const state = this.consoles.get(portId);
     if (!state) return;
     const message: ConsoleServerMessage = { type: 'viewers', viewers: this.getViewers(portId) };
-    for (const viewer of state.viewers.values()) viewer.send(message);
+    for (const viewer of state.viewers.values()) viewer.client.send(message);
   }
 
   private broadcastWriteToken(portId: PortId): void {
     const state = this.consoles.get(portId);
     if (!state) return;
     const message: ConsoleServerMessage = { type: 'writerChanged', writeToken: this.getWriteTokenState(portId) };
-    for (const viewer of state.viewers.values()) viewer.send(message);
+    for (const viewer of state.viewers.values()) viewer.client.send(message);
     this.broadcastViewers(portId);
   }
 }

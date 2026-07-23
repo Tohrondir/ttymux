@@ -16,6 +16,7 @@ interface ManagedPortState {
   attempt: number;
   reconnectTimer?: ReturnType<typeof setTimeout>;
   present: boolean;
+  lastSeenAt?: string;
 }
 
 export interface SerialManagerOptions {
@@ -80,6 +81,7 @@ export class SerialManager extends EventEmitter {
     const managed = this.ports.get(portId);
     if (!managed) return;
     managed.present = false;
+    managed.lastSeenAt = new Date().toISOString();
     this.clearReconnectTimer(managed);
     this.closeHandle(managed, { intentional: true });
     this.setStatus(portId, managed, 'offline');
@@ -113,10 +115,19 @@ export class SerialManager extends EventEmitter {
     return this.ports.get(portId)?.settings;
   }
 
-  getStatus(portId: PortId): { status: PortConnectionStatus; errorMessage?: string } | undefined {
+  getStatus(portId: PortId): { status: PortConnectionStatus; errorMessage?: string; lastSeenAt?: string } | undefined {
     const managed = this.ports.get(portId);
     if (!managed) return undefined;
-    return { status: managed.status, errorMessage: managed.errorMessage };
+    return { status: managed.status, errorMessage: managed.errorMessage, lastSeenAt: managed.lastSeenAt };
+  }
+
+  getDescriptor(portId: PortId): PortDescriptor | undefined {
+    return this.ports.get(portId)?.descriptor;
+  }
+
+  /** All port ids ever seen, including ones currently offline (unplugged but remembered). */
+  listKnownIds(): PortId[] {
+    return [...this.ports.keys()];
   }
 
   stop(): void {
