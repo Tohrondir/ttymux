@@ -42,23 +42,29 @@ export function SidebarPortItem({ port, selected }: { port: PortInfo; selected: 
         <StatusDot status={port.status} showLabel={false} />
 
         {editing ? (
-          <input
-            autoFocus
-            value={draft}
-            onClick={(event) => event.stopPropagation()}
-            onChange={(event) => setDraft(event.target.value)}
-            onBlur={commitRename}
-            onKeyDown={(event) => {
-              event.stopPropagation();
-              if (event.key === 'Enter') (event.target as HTMLInputElement).blur();
-              if (event.key === 'Escape') setEditing(false);
-            }}
-            className="min-w-0 flex-1 rounded border border-signal-dim bg-ink px-1 py-0.5 text-sm text-paper outline-none"
-          />
+          <div className="min-w-0 flex-1">
+            <input
+              autoFocus
+              value={draft}
+              onClick={(event) => event.stopPropagation()}
+              onChange={(event) => setDraft(event.target.value)}
+              onBlur={commitRename}
+              onKeyDown={(event) => {
+                event.stopPropagation();
+                if (event.key === 'Enter') (event.target as HTMLInputElement).blur();
+                if (event.key === 'Escape') setEditing(false);
+              }}
+              className="w-full rounded border border-signal-dim bg-ink px-1 py-0.5 text-sm text-paper outline-none"
+            />
+            <p className="truncate px-1 font-mono text-[11px] text-fog">{port.path}</p>
+          </div>
         ) : (
-          <span className="min-w-0 flex-1 truncate text-sm text-paper" title={port.id}>
-            {port.friendlyName ?? port.path}
-          </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm text-paper" title={port.id}>
+              {port.friendlyName ?? port.path}
+            </p>
+            {port.friendlyName && <p className="truncate font-mono text-[11px] text-fog">{port.path}</p>}
+          </div>
         )}
 
         {!editing && (

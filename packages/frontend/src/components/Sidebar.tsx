@@ -1,24 +1,26 @@
 import { useMemo } from 'react';
+import type { PortInfo } from '@ttymux/shared';
 import { usePorts } from '../hooks/usePorts.js';
-import { navigate } from '../hooks/useRoute.js';
 import { groupPorts } from '../utils/groupPorts.js';
 import { SidebarPortItem } from './SidebarPortItem.js';
 import { TokenPrompt } from './TokenPrompt.js';
 
 export function Sidebar({ selectedPortId }: { selectedPortId: string | null }) {
   const { ports, loading, error, authRequired, refresh } = usePorts();
-  const grouped = useMemo(() => groupPorts(ports), [ports]);
+
+  const okPorts = useMemo(() => ports.filter((p) => p.status !== 'error'), [ports]);
+  const errorPorts = useMemo(
+    () => ports.filter((p) => p.status === 'error').sort((a, b) => (a.friendlyName ?? a.path).localeCompare(b.friendlyName ?? b.path)),
+    [ports],
+  );
+  const grouped = useMemo(() => groupPorts(okPorts), [okPorts]);
 
   return (
     <aside className="flex w-72 shrink-0 flex-col border-r border-line bg-panel">
-      <button
-        type="button"
-        onClick={() => navigate('/')}
-        className="border-b border-line px-4 py-3 text-left transition-colors hover:bg-panel-raised"
-      >
+      <div className="border-b border-line px-4 py-3">
         <h1 className="font-mono text-sm font-semibold tracking-tight text-paper">ttymux</h1>
         <p className="text-xs text-fog">Serial consoles on this host</p>
-      </button>
+      </div>
 
       <div className="flex-1 overflow-y-auto px-2 py-2">
         {authRequired && (
@@ -44,6 +46,17 @@ export function Sidebar({ selectedPortId }: { selectedPortId: string | null }) {
             ))}
           </div>
         ))}
+
+        {errorPorts.length > 0 && (
+          <details className="mb-3">
+            <summary className="mb-1 cursor-pointer select-none px-2 text-[11px] font-medium uppercase tracking-wider text-fog hover:text-paper">
+              Errors ({errorPorts.length})
+            </summary>
+            {errorPorts.map((port: PortInfo) => (
+              <SidebarPortItem key={port.id} port={port} selected={port.id === selectedPortId} />
+            ))}
+          </details>
+        )}
       </div>
     </aside>
   );
