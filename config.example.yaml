@@ -1,0 +1,63 @@
+# ttymux example configuration.
+#
+# This file is entirely optional. With no config file at all, ttymux
+# auto-discovers every serial port on the host and just works, listening on
+# 127.0.0.1:9000 with no authentication.
+#
+# To use this file: copy it to ttymux.config.yaml (or point --config at a
+# path of your choosing) and uncomment/edit whatever you want to change.
+# Every key below is optional and falls back to its default when omitted.
+
+server:
+  port: 9000
+  # Default is loopback-only (127.0.0.1). Set to 0.0.0.0 to accept
+  # connections from other machines on the network -- if you do this,
+  # also configure `auth` below. See the README security warning.
+  host: 127.0.0.1
+
+auth:
+  # none   - no authentication (default; fine for loopback-only use)
+  # token  - a single shared bearer token, required for all clients
+  # basic  - per-user HTTP Basic auth
+  mode: none
+
+  # Required when mode: token. Send as `Authorization: Bearer <token>`
+  # for REST calls, or `?token=<token>` on WebSocket connections (browsers
+  # cannot set custom headers during the WS handshake).
+  # token: "change-me-to-a-long-random-string"
+
+  # Required when mode: basic. Generate a hash with:
+  #   npx @ttymux/backend hash-password
+  # users:
+  #   - username: alice
+  #     passwordHash: "scrypt:<salt>:<hash>"
+
+logging:
+  enabled: true
+  directory: ./logs
+  maxSizeMb: 10
+  maxFiles: 5
+
+scrollback:
+  # Ring buffer size per port, in bytes. Replayed to a viewer's terminal
+  # the moment they attach to a console.
+  bytes: 200000
+
+# Per-port overrides, layered on top of auto-discovery. Keyed by the port's
+# stable id -- see the "id" field returned by GET /api/ports, or the
+# dashboard card for a port you've already plugged in. Ports with no entry
+# here use pure auto-discovery with default settings.
+ports:
+  "usb-FTDI_FT232R_USB_UART_A12BC3XY-if00":
+    name: "Router console"
+    group: "Lab rack 1"
+    defaultSettings:
+      baudRate: 9600
+    hidden: false
+
+  # Ports without a stable USB identifier fall back to a path-derived id
+  # (e.g. "path:/dev/ttyUSB0" or "path:COM3"). These ids are NOT stable
+  # across replug -- prefer stable ids whenever the hardware provides one.
+  "path:/dev/ttyACM0":
+    name: "Bench supply"
+    hidden: true

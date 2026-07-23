@@ -1,0 +1,36 @@
+{
+  "name": "@ttymux/backend",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "description": "ttymux backend: serial port discovery, session management, REST + WebSocket transport",
+  "type": "module",
+  "bin": {
+    "ttymux": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@fastify/static": "^10.1.2",
+    "@fastify/websocket": "^11.0.2",
+    "@ttymux/shared": "0.1.0",
+    "commander": "^12.1.0",
+    "fastify": "^5.10.0",
+    "js-yaml": "^4.1.0",
+    "serialport": "^12.0.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^20.14.15",
+    "tsx": "^4.16.5",
+    "typescript": "^5.5.4",
+    "vitest": "^4.1.10"
+  }
+}
