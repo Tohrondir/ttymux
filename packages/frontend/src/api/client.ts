@@ -127,7 +127,14 @@ export interface ConsoleSocketHandle {
 
 /** Generate up front (e.g. via `useRef`) so it's known before the socket connects — matches `writeToken.holder`/`viewers[].clientId` to tell whether this tab holds the token. */
 export function generateClientId(): string {
-  return crypto.randomUUID();
+  // `crypto.randomUUID()` only works in secure contexts (HTTPS or literally
+  // `localhost`) — plain `http://<lan-ip>:9000`, e.g. reaching a host over
+  // the network by IP, is not one, and calling it throws. This id only needs
+  // to be unique per browser tab, not cryptographically unpredictable, so
+  // fall back to `getRandomValues` (which has no such restriction).
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 export function connectConsoleSocket(portId: string, clientId: string, handlers: ConsoleSocketHandlers): ConsoleSocketHandle {
