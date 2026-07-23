@@ -121,11 +121,14 @@ export interface ConsoleSocketHandlers {
 }
 
 export interface ConsoleSocketHandle {
+  /** Stable for this handle's lifetime (survives auto-reconnects) — matches `writeToken.holder`/`viewers[].clientId` to tell whether this tab holds the token. */
+  clientId: string;
   send(message: ConsoleClientMessage): void;
   close(): void;
 }
 
 export function connectConsoleSocket(portId: string, handlers: ConsoleSocketHandlers): ConsoleSocketHandle {
+  const clientId = crypto.randomUUID();
   let closedByCaller = false;
   let socket: WebSocket | null = null;
   let attempt = 0;
@@ -139,7 +142,8 @@ export function connectConsoleSocket(portId: string, handlers: ConsoleSocketHand
   }
 
   function connect() {
-    const params: Record<string, string> = handlers.displayName ? { name: handlers.displayName } : {};
+    const params: Record<string, string> = { clientId };
+    if (handlers.displayName) params.name = handlers.displayName;
     socket = new WebSocket(buildWsUrl(`/ws/console/${encodeURIComponent(portId)}`, params));
     socket.onopen = () => {
       attempt = 0;
@@ -165,6 +169,7 @@ export function connectConsoleSocket(portId: string, handlers: ConsoleSocketHand
   connect();
 
   return {
+    clientId,
     send(message) {
       if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify(message));
       else queued.push(message);

@@ -25,7 +25,10 @@ export function registerConsoleRoute(fastify: FastifyInstance, deps: TransportDe
       return;
     }
 
-    const clientId = randomUUID();
+    // Prefer the client-supplied id so the browser can recognize itself in
+    // `viewers`/`writeToken` (e.g. "is this tab the current writer?") without
+    // the server needing a dedicated "here's your id" message.
+    const clientId = query.clientId || randomUUID();
     const client: ClientHandle = {
       clientId,
       displayName: query.name || undefined,
