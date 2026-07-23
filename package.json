@@ -1,0 +1,26 @@
+{
+  "name": "ttymux",
+  "private": true,
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "Multi-user web dashboard for managing serial console connections",
+  "workspaces": [
+    "packages/shared",
+    "packages/backend",
+    "packages/frontend"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "dev": "concurrently -n backend,frontend -c blue,green \"npm run dev --workspace packages/backend\" \"npm run dev --workspace packages/frontend\"",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "typescript": "^5.5.4"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
