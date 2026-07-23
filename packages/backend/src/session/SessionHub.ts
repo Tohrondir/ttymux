@@ -1,3 +1,4 @@
+import { EventEmitter } from 'node:events';
 import type { ConsoleServerMessage, PortId, PortInfo, ViewerInfo, WriteTokenState } from '@ttymux/shared';
 
 export interface ClientHandle {
@@ -21,18 +22,37 @@ export interface ControlResult {
   reason?: string;
 }
 
+export interface SessionHub {
+  /** Fires whenever viewer count or write-token state changes for a console — the dashboard's live view hooks in here. */
+  on(event: 'changed', listener: (portId: PortId) => void): this;
+}
+
 /**
  * Per-console viewer tracking and write-token arbitration. Transport-agnostic:
  * callers hand it a small `ClientHandle` (send callback) rather than a raw
  * WebSocket, so a future non-serial transport could reuse it unchanged.
  */
-export class SessionHub {
+export class SessionHub extends EventEmitter {
   private readonly consoles = new Map<PortId, ConsoleState>();
 
   attach(portId: PortId, client: ClientHandle): void {
     const state = this.getOrCreate(portId);
+    const isFirstViewer = state.viewers.size === 0;
     state.viewers.set(client.clientId, { client, connectedAt: new Date().toISOString() });
-    this.broadcastViewers(portId);
+
+    // The first person to open an unclaimed console gets control automatically
+    // — no point making a lone viewer click "take control" on their own console.
+    if (isFirstViewer && state.writeToken.holder === null && !state.writeToken.freeForAll) {
+      state.writeToken.holder = client.clientId;
+      state.writeToken.holderName = client.displayName;
+      state.writeToken.since = new Date().toISOString();
+    }
+
+    // Always send full write-token state on attach (rather than only on
+    // change) so a newly joined viewer has authoritative state immediately,
+    // instead of inferring it from the partial `writer` summary on `status`.
+    this.broadcastWriteToken(portId);
+    this.emit('changed', portId);
   }
 
   detach(portId: PortId, clientId: string): void {
@@ -42,8 +62,10 @@ export class SessionHub {
     if (state.writeToken.holder === clientId) {
       this.clearWriteToken(state);
       this.broadcastWriteToken(portId);
+    } else {
+      this.broadcastViewers(portId);
     }
-    this.broadcastViewers(portId);
+    this.emit('changed', portId);
   }
 
   requestControl(portId: PortId, clientId: string): ControlResult {
@@ -56,6 +78,7 @@ export class SessionHub {
     state.writeToken.holderName = client?.displayName;
     state.writeToken.since = new Date().toISOString();
     this.broadcastWriteToken(portId);
+    this.emit('changed', portId);
     return { granted: true };
   }
 
@@ -64,12 +87,14 @@ export class SessionHub {
     if (!state || state.writeToken.holder !== clientId) return;
     this.clearWriteToken(state);
     this.broadcastWriteToken(portId);
+    this.emit('changed', portId);
   }
 
   setFreeForAll(portId: PortId, enabled: boolean): void {
     const state = this.getOrCreate(portId);
     state.writeToken.freeForAll = enabled;
     this.broadcastWriteToken(portId);
+    this.emit('changed', portId);
   }
 
   /** Off by default: a client may only write while holding the token, unless free-for-all is enabled. */

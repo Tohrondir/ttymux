@@ -12,9 +12,10 @@ import { PortRegistry } from './registry/PortRegistry.js';
 import { listRawPorts } from './registry/discovery.js';
 import { SerialManager } from './serial/SerialManager.js';
 import { SessionHub } from './session/SessionHub.js';
+import { EventsBroadcaster } from './transport/EventsBroadcaster.js';
 import { buildPortInfo } from './transport/portInfo.js';
 import { registerRestRoutes } from './transport/restRoutes.js';
-import { EventsBroadcaster, registerEventsRoute } from './transport/wsEvents.js';
+import { registerEventsRoute } from './transport/wsEvents.js';
 import { registerConsoleRoute } from './transport/wsConsole.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -71,6 +72,13 @@ export async function startServer(config: ResolvedConfig): Promise<ServerHandle>
     if (!info) return;
     sessionHub.broadcastStatus(portId, info);
     broadcaster.broadcast({ type: 'portStatusChanged', port: info });
+  });
+
+  // Viewer count and write-token changes don't go through SerialManager, so
+  // they need their own path to reach the dashboard's live view.
+  sessionHub.on('changed', (portId) => {
+    const info = buildPortInfo(portId, serialManager, sessionHub, config.ports);
+    if (info) broadcaster.broadcast({ type: 'portStatusChanged', port: info });
   });
 
   registerRestRoutes(fastify, deps);

@@ -7,6 +7,33 @@ function makeClient(clientId: string): ClientHandle & { sent: unknown[] } {
 }
 
 describe('SessionHub write-token arbitration', () => {
+  it('auto-grants control to the first viewer of an unclaimed console', () => {
+    const hub = new SessionHub();
+    hub.attach('p1', makeClient('a'));
+
+    expect(hub.getWriteTokenState('p1').holder).toBe('a');
+    expect(hub.canWrite('p1', 'a')).toBe(true);
+  });
+
+  it('does not auto-grant control to the second viewer to attach', () => {
+    const hub = new SessionHub();
+    hub.attach('p1', makeClient('a'));
+    hub.attach('p1', makeClient('b'));
+
+    expect(hub.getWriteTokenState('p1').holder).toBe('a');
+    expect(hub.canWrite('p1', 'b')).toBe(false);
+  });
+
+  it('does not auto-grant a holder when free-for-all is already on', () => {
+    const hub = new SessionHub();
+    hub.setFreeForAll('p1', true);
+
+    hub.attach('p1', makeClient('a'));
+
+    expect(hub.getWriteTokenState('p1').holder).toBeNull();
+    expect(hub.canWrite('p1', 'a')).toBe(true);
+  });
+
   it('grants control to the first requester and denies a second', () => {
     const hub = new SessionHub();
     hub.attach('p1', makeClient('a'));
@@ -76,6 +103,7 @@ describe('SessionHub write-token arbitration', () => {
     const hub = new SessionHub();
     hub.attach('p1', makeClient('a'));
     hub.attach('p1', makeClient('b'));
+    hub.releaseControl('p1', 'a'); // 'a' auto-holds it as the first viewer — free it up first
     hub.requestControl('p1', 'b');
 
     const viewers = hub.getViewers('p1');
@@ -96,9 +124,10 @@ describe('SessionHub write-token arbitration', () => {
   it('consoles are independent: holding the token on one port has no effect on another', () => {
     const hub = new SessionHub();
     hub.attach('p1', makeClient('a'));
+    // 'other' attaches to p2 first, so 'a' joining p2 next is NOT the first
+    // viewer there and doesn't auto-claim it.
+    hub.attach('p2', makeClient('other'));
     hub.attach('p2', makeClient('a'));
-
-    hub.requestControl('p1', 'a');
 
     expect(hub.canWrite('p1', 'a')).toBe(true);
     expect(hub.canWrite('p2', 'a')).toBe(false);
