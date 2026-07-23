@@ -5,6 +5,7 @@
   "license": "MIT",
   "description": "ttymux backend: serial port discovery, session management, REST + WebSocket transport",
   "type": "module",
+  "os": ["linux", "darwin"],
   "bin": {
     "ttymux": "./dist/index.js"
   },
