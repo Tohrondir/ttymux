@@ -20,7 +20,7 @@ export interface UseConsoleSocketResult {
 }
 
 export interface ConsoleDataHandlers {
-  /** Sent once per attach (including re-attach after a drop) with the full current backlog — replace, don't append. */
+  /** Sent once per attach (including re-attach after a drop) with the full current backlog: replace, don't append. */
   onScrollback: (bytes: Uint8Array) => void;
   onOutput: (bytes: Uint8Array) => void;
 }

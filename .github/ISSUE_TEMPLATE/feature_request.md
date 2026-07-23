@@ -19,4 +19,4 @@ Describe the situation you're in and what's currently awkward or impossible.
 v1 intentionally excludes a full user-account system/RBAC (single shared
 token is the ceiling), session recording/playback (disk logs suffice), and
 non-serial transports (SSH/telnet). If your idea touches one of these, it's
-still worth opening — just flag it so the discussion can start there.
+still worth opening, just flag it so the discussion can start there.

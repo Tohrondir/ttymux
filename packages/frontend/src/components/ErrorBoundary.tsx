@@ -11,7 +11,7 @@ interface State {
 /**
  * Without this, an uncaught render error anywhere below unmounts the whole
  * tree, taking every event listener with it (including the router's
- * `popstate` handler) — the page looks frozen and even the browser back
+ * `popstate` handler), the page looks frozen and even the browser back
  * button stops doing anything until a manual reload.
  */
 export class ErrorBoundary extends Component<Props, State> {

@@ -56,7 +56,7 @@ export async function startServer(config: ResolvedConfig): Promise<ServerHandle>
   });
 
   registry.on('removed', (portId) => {
-    // Marks the port offline rather than deleting it — the SerialManager 'status'
+    // Marks the port offline rather than deleting it. The SerialManager 'status'
     // listener below broadcasts the resulting change. Ports persist as offline so
     // they're still visible (and remembered) across a replug.
     serialManager.handlePortRemoved(portId);
@@ -97,7 +97,7 @@ export async function startServer(config: ResolvedConfig): Promise<ServerHandle>
     });
   } else {
     fastify.log.warn(
-      'No frontend build found at %s — run "npm run build --workspace packages/frontend" to serve the UI from this process.',
+      'No frontend build found at %s, run "npm run build --workspace packages/frontend" to serve the UI from this process.',
       frontendDist,
     );
   }

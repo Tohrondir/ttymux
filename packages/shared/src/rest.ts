@@ -3,7 +3,7 @@ import type { PortInfo } from './ports.js';
 
 /**
  * Console I/O and control handoff go through the per-console WebSocket, not
- * REST — see ws-messages.ts. Renaming/grouping a port is a REST call since
+ * REST, see ws-messages.ts. Renaming/grouping a port is a REST call since
  * it's an administrative action on the port itself, not a console session.
  *
  *   GET   /api/ports        -> GetPortsResponse

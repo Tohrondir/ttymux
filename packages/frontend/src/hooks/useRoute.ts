@@ -13,7 +13,7 @@ export function navigate(pathname: string): void {
   window.dispatchEvent(new PopStateEvent('popstate'));
 }
 
-/** Minimal pushState router — selects which console (if any) shows in the main pane; the sidebar itself never navigates away. */
+/** Minimal pushState router: selects which console (if any) shows in the main pane; the sidebar itself never navigates away. */
 export function useRoute(): Route {
   const [route, setRoute] = useState<Route>(() => parseRoute(window.location.pathname));
 

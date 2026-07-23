@@ -68,7 +68,7 @@ export class SerialManager extends EventEmitter {
       managed.descriptor = descriptor;
       managed.present = true;
       if (managed.handle?.isOpen) {
-        // Already connected under this id — nothing to do unless the OS path changed.
+        // Already connected under this id; nothing to do unless the OS path changed.
         return;
       }
     }

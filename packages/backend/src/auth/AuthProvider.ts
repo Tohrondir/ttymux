@@ -5,7 +5,7 @@ export interface AuthRequestContext {
   remoteAddress?: string;
   /** Raw `Authorization` header value, e.g. "Bearer xyz" or "Basic base64(...)". */
   authorizationHeader?: string;
-  /** `?token=` query param — WebSocket handshakes can't set custom headers from a browser. */
+  /** `?token=` query param, WebSocket handshakes can't set custom headers from a browser. */
   tokenQueryParam?: string;
 }
 

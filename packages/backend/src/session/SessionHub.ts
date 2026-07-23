@@ -18,7 +18,7 @@ interface ConsoleState {
 }
 
 export interface SessionHub {
-  /** Fires whenever viewer count or write-token state changes for a console — the dashboard's live view hooks in here. */
+  /** Fires whenever viewer count or write-token state changes for a console: the dashboard's live view hooks in here. */
   on(event: 'changed', listener: (portId: PortId) => void): this;
 }
 
@@ -35,8 +35,8 @@ export class SessionHub extends EventEmitter {
     const isFirstViewer = state.viewers.size === 0;
     state.viewers.set(client.clientId, { client, connectedAt: new Date().toISOString() });
 
-    // The first person to open an unclaimed console gets control automatically
-    // — no point making a lone viewer click "take control" on their own console.
+    // The first person to open an unclaimed console gets control automatically,
+    // no point making a lone viewer click "take control" on their own console.
     if (isFirstViewer && state.writeToken.holder === null && !state.writeToken.freeForAll) {
       state.writeToken.holder = client.clientId;
       state.writeToken.holderName = client.displayName;
@@ -63,7 +63,7 @@ export class SessionHub extends EventEmitter {
     this.emit('changed', portId);
   }
 
-  /** Always succeeds, taking over from whoever currently holds it — no need for the previous holder to release first. */
+  /** Always succeeds, taking over from whoever currently holds it. No need for the previous holder to release first. */
   requestControl(portId: PortId, clientId: string): void {
     const state = this.getOrCreate(portId);
     const client = state.viewers.get(clientId)?.client;

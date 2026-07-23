@@ -8,7 +8,7 @@ const STATUS_META: Record<Exclude<PortConnectionStatus, 'online'>, { dot: string
 
 export interface StatusDotProps {
   status: PortConnectionStatus;
-  /** Someone currently holds the write token — shown as "In use" instead of "Free", in the same amber as the take-control button. */
+  /** Someone currently holds the write token: shown as "In use" instead of "Free", in the same amber as the take-control button. */
   hasWriter?: boolean;
   showLabel?: boolean;
 }

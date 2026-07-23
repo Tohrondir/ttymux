@@ -32,7 +32,7 @@ function buildSymlinkMap(dir: string): Map<string, string> {
       const resolved = realpathSync(`${dir}/${name}`);
       map.set(resolved, name);
     } catch {
-      // Symlink target vanished between readdir and realpath (race with unplug) — skip it.
+      // Symlink target vanished between readdir and realpath (race with unplug), skip it.
     }
   }
   return map;
@@ -42,8 +42,8 @@ const LEGACY_TTY_PATTERN = /^\/dev\/ttyS\d+$/;
 
 /**
  * Linux always exposes /dev/ttyS0..31 for legacy 8250/16550 UART headers,
- * almost none of which are wired to real hardware on modern machines —
- * opening them fails immediately. Excluded by default so discovery reflects
+ * almost none of which are wired to real hardware on modern machines,
+ * so opening them fails immediately. Excluded by default so discovery reflects
  * actual USB/serial devices; set discovery.includeLegacyPorts to include them.
  */
 export function isLikelyPhantomLegacyPort(path: string): boolean {

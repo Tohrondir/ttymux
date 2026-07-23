@@ -9,7 +9,7 @@ export interface TransportDeps {
   sessionHub: SessionHub;
   authProvider: AuthProvider;
   authMode: AuthMode;
-  /** Mutated directly by PATCH /api/ports/:id (renames) — the single source of truth read everywhere a PortInfo is built. */
+  /** Mutated directly by PATCH /api/ports/:id (renames): the single source of truth read everywhere a PortInfo is built. */
   portOverrides: Record<PortId, PortOverride>;
   broadcaster: EventsBroadcaster;
 }

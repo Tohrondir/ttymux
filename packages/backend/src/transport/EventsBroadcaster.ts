@@ -1,7 +1,7 @@
 import type { WebSocket } from 'ws';
 import type { EventsServerMessage } from '@ttymux/shared';
 
-/** Fan-out for `/ws/events` subscribers — dashboard-wide port add/remove/status deltas. */
+/** Fan-out for `/ws/events` subscribers: dashboard-wide port add/remove/status deltas. */
 export class EventsBroadcaster {
   private readonly sockets = new Set<WebSocket>();
 

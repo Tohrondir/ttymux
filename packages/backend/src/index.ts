@@ -20,7 +20,7 @@ program
     if (opts.host) config.server.host = opts.host;
 
     const handle = await startServer(config);
-    const configNote = sourcePath ? `config: ${sourcePath}` : 'no config file — zero-config defaults';
+    const configNote = sourcePath ? `config: ${sourcePath}` : 'no config file, zero-config defaults';
     console.log(`ttymux listening on http://${handle.host}:${handle.port} (${configNote})`);
 
     const shutdown = async () => {
