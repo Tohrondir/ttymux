@@ -55,8 +55,10 @@ export async function startServer(config: ResolvedConfig): Promise<ServerHandle>
   });
 
   registry.on('removed', (portId) => {
+    // Marks the port offline rather than deleting it — the SerialManager 'status'
+    // listener below broadcasts the resulting change. Ports persist as offline so
+    // they're still visible (and remembered) across a replug.
     serialManager.handlePortRemoved(portId);
-    broadcaster.broadcast({ type: 'portRemoved', portId });
   });
 
   serialManager.on('data', (portId, chunk) => {
