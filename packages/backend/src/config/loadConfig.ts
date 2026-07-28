@@ -10,6 +10,7 @@ export interface ResolvedConfig {
   logging: { enabled: boolean; directory: string; maxSizeMb: number; maxFiles: number };
   scrollback: { bytes: number };
   discovery: { includeLegacyPorts: boolean };
+  persistence: { directory: string };
   ports: Record<PortId, PortOverride>;
 }
 
@@ -19,6 +20,7 @@ export const DEFAULT_CONFIG: ResolvedConfig = {
   logging: { enabled: true, directory: './logs', maxSizeMb: 10, maxFiles: 5 },
   scrollback: { bytes: 200_000 },
   discovery: { includeLegacyPorts: false },
+  persistence: { directory: './data' },
   ports: {},
 };
 
@@ -53,6 +55,7 @@ export function loadConfig(explicitPath?: string): LoadConfigResult {
     logging: { ...DEFAULT_CONFIG.logging, ...parsed.logging },
     scrollback: { bytes: parsed.scrollback?.bytes ?? DEFAULT_CONFIG.scrollback.bytes },
     discovery: { includeLegacyPorts: parsed.discovery?.includeLegacyPorts ?? DEFAULT_CONFIG.discovery.includeLegacyPorts },
+    persistence: { directory: parsed.persistence?.directory ?? DEFAULT_CONFIG.persistence.directory },
     ports: parsed.ports ?? {},
   };
 

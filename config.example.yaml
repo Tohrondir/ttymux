@@ -50,6 +50,13 @@ discovery:
   # hardware on one of these (e.g. an industrial PC with a real RS-232 port).
   includeLegacyPorts: false
 
+persistence:
+  # Where renames/groups made from the UI (not this file) are saved as a
+  # small JSON file, so they survive a restart. Mount this as a volume in
+  # Docker if you want renames to persist across container recreation, e.g.
+  # in docker-compose.yml: "./data:/app/data".
+  directory: ./data
+
 # Per-port overrides, layered on top of auto-discovery. Keyed by the port's
 # stable id -- see the "id" field returned by GET /api/ports, or the
 # dashboard card for a port you've already plugged in. Ports with no entry

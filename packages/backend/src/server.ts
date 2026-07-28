@@ -7,6 +7,7 @@ import fastifyWebsocket from '@fastify/websocket';
 import { DEFAULT_SERIAL_SETTINGS } from '@ttymux/shared';
 import { createAuthProvider } from './auth/AuthProvider.js';
 import type { ResolvedConfig } from './config/loadConfig.js';
+import { PortOverridesStore } from './config/PortOverridesStore.js';
 import { LogWriter } from './logging/LogWriter.js';
 import { PortRegistry } from './registry/PortRegistry.js';
 import { listRawPorts } from './registry/discovery.js';
@@ -39,19 +40,20 @@ export async function startServer(config: ResolvedConfig): Promise<ServerHandle>
   const logWriter = new LogWriter(config.logging);
   const authProvider = createAuthProvider(config.auth);
   const broadcaster = new EventsBroadcaster();
+  const portOverrides = new PortOverridesStore(config.ports, resolve(config.persistence.directory, 'port-overrides.json'));
 
   const deps = {
     serialManager,
     sessionHub,
     authProvider,
     authMode: config.auth.mode,
-    portOverrides: config.ports,
+    portOverrides,
     broadcaster,
   };
 
   registry.on('added', (descriptor) => {
     serialManager.handlePortAdded(descriptor);
-    const info = buildPortInfo(descriptor.id, serialManager, sessionHub, config.ports);
+    const info = buildPortInfo(descriptor.id, serialManager, sessionHub, portOverrides);
     if (info) broadcaster.broadcast({ type: 'portAdded', port: info });
   });
 
@@ -68,7 +70,7 @@ export async function startServer(config: ResolvedConfig): Promise<ServerHandle>
   });
 
   serialManager.on('status', (portId) => {
-    const info = buildPortInfo(portId, serialManager, sessionHub, config.ports);
+    const info = buildPortInfo(portId, serialManager, sessionHub, portOverrides);
     if (!info) return;
     sessionHub.broadcastStatus(portId, info);
     broadcaster.broadcast({ type: 'portStatusChanged', port: info });
@@ -77,7 +79,7 @@ export async function startServer(config: ResolvedConfig): Promise<ServerHandle>
   // Viewer count and write-token changes don't go through SerialManager, so
   // they need their own path to reach the dashboard's live view.
   sessionHub.on('changed', (portId) => {
-    const info = buildPortInfo(portId, serialManager, sessionHub, config.ports);
+    const info = buildPortInfo(portId, serialManager, sessionHub, portOverrides);
     if (info) broadcaster.broadcast({ type: 'portStatusChanged', port: info });
   });
 

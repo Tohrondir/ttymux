@@ -51,6 +51,11 @@ export const configSchema = z.object({
       includeLegacyPorts: z.boolean().optional(),
     })
     .optional(),
+  persistence: z
+    .object({
+      directory: z.string().optional(),
+    })
+    .optional(),
   ports: z.record(portOverrideSchema).optional(),
 });
 

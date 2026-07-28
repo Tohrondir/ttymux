@@ -36,12 +36,18 @@ export interface ServerConfig {
   host?: string;
 }
 
+export interface PersistenceConfig {
+  /** Where runtime state (currently: port renames/groups made from the UI) is saved, so it survives a restart. Mount this as a volume in Docker. */
+  directory?: string;
+}
+
 export interface TtymuxConfig {
   server?: ServerConfig;
   auth?: AuthConfig;
   logging?: LoggingConfig;
   scrollback?: ScrollbackConfig;
   discovery?: DiscoveryConfig;
+  persistence?: PersistenceConfig;
   /** Keyed by stable port id (falls back to path-derived id when no stable id exists). */
   ports?: Record<PortId, PortOverride>;
 }

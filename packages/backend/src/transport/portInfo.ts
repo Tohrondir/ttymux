@@ -1,4 +1,5 @@
-import { DEFAULT_SERIAL_SETTINGS, type PortId, type PortInfo, type PortOverride } from '@ttymux/shared';
+import { DEFAULT_SERIAL_SETTINGS, type PortId, type PortInfo } from '@ttymux/shared';
+import type { PortOverridesStore } from '../config/PortOverridesStore.js';
 import type { SerialManager } from '../serial/SerialManager.js';
 import type { SessionHub } from '../session/SessionHub.js';
 
@@ -6,7 +7,7 @@ export function buildPortInfo(
   portId: PortId,
   serialManager: SerialManager,
   sessionHub: SessionHub,
-  portOverrides: Record<PortId, PortOverride>,
+  overrides: PortOverridesStore,
 ): PortInfo | undefined {
   const descriptor = serialManager.getDescriptor(portId);
   if (!descriptor) return undefined;
@@ -14,7 +15,7 @@ export function buildPortInfo(
   const statusInfo = serialManager.getStatus(portId) ?? { status: 'offline' as const };
   const settings = serialManager.getSettings(portId) ?? DEFAULT_SERIAL_SETTINGS;
   const writeToken = sessionHub.getWriteTokenState(portId);
-  const override = portOverrides[portId];
+  const override = overrides.get(portId);
 
   return {
     id: descriptor.id,
@@ -39,13 +40,9 @@ export function buildPortInfo(
   };
 }
 
-export function listAllPortInfo(
-  serialManager: SerialManager,
-  sessionHub: SessionHub,
-  portOverrides: Record<PortId, PortOverride>,
-): PortInfo[] {
+export function listAllPortInfo(serialManager: SerialManager, sessionHub: SessionHub, overrides: PortOverridesStore): PortInfo[] {
   return serialManager
     .listKnownIds()
-    .map((id) => buildPortInfo(id, serialManager, sessionHub, portOverrides))
-    .filter((info): info is PortInfo => info !== undefined && !portOverrides[info.id]?.hidden);
+    .map((id) => buildPortInfo(id, serialManager, sessionHub, overrides))
+    .filter((info): info is PortInfo => info !== undefined && !overrides.get(info.id)?.hidden);
 }

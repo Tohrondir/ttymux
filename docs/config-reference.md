@@ -105,6 +105,27 @@ excludes them from discovery by default. If you have genuine hardware on one
 of these (some industrial PCs have a real onboard RS-232 port), set this to
 `true`.
 
+## `persistence`
+
+```yaml
+persistence:
+  directory: ./data
+```
+
+Where renames/groups made from the sidebar UI (see `PATCH /api/ports/:id`
+below) are saved, as a small JSON file (`port-overrides.json`), so they
+survive a restart. This is separate from `ports:` below on purpose: `ports:`
+is declarative config you hand-edit, while this directory is state the
+server writes itself. Keeping them apart means a UI rename can never rewrite
+(and reformat, losing your comments) this config file.
+
+**In Docker**, mount this directory as a volume so renames survive
+`docker compose down`/`up` and image rebuilds, not just container restarts.
+[docker-compose.yml](../docker-compose.yml) already does this
+(`./data:/app/data`); with plain `docker run`, add `-v ./data:/app/data`.
+Without a volume, renames still work, just only for as long as that
+particular container lives.
+
 ## `ports`
 
 ```yaml
@@ -140,11 +161,10 @@ or `GET /api/ports` for a port you've already plugged in:
 | `hidden` | Excludes the port from the sidebar and `GET /api/ports` listing entirely. It's still reachable directly by id (e.g. a bookmarked console URL); this is a declutter option, not an access control. |
 
 `name` and `group` can also be set from the UI (hover a port in the sidebar
-for the rename icon) via `PATCH /api/ports/:id`. UI renames are **in-memory
-only**: they last for as long as the server process runs, but don't get
-written back to this file, so a restart reverts to whatever's configured
-here (or the auto-discovered name, if nothing is). Set `name`/`group` here
-instead for names that need to survive a restart.
+for the rename icon) via `PATCH /api/ports/:id`. UI renames are saved to the
+`persistence.directory` above (see that section), not written back to this
+file. If both set a name for the same port, the UI rename wins; edit this
+file instead if you want a name that a UI rename can't override.
 
 ## Docker device access
 

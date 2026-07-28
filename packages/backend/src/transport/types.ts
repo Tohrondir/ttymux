@@ -1,5 +1,6 @@
-import type { AuthMode, PortId, PortOverride } from '@ttymux/shared';
+import type { AuthMode } from '@ttymux/shared';
 import type { AuthProvider } from '../auth/AuthProvider.js';
+import type { PortOverridesStore } from '../config/PortOverridesStore.js';
 import type { SerialManager } from '../serial/SerialManager.js';
 import type { SessionHub } from '../session/SessionHub.js';
 import type { EventsBroadcaster } from './EventsBroadcaster.js';
@@ -9,7 +10,7 @@ export interface TransportDeps {
   sessionHub: SessionHub;
   authProvider: AuthProvider;
   authMode: AuthMode;
-  /** Mutated directly by PATCH /api/ports/:id (renames): the single source of truth read everywhere a PortInfo is built. */
-  portOverrides: Record<PortId, PortOverride>;
+  /** Config-file overrides merged with persisted runtime renames; PATCH /api/ports/:id writes into the runtime layer. */
+  portOverrides: PortOverridesStore;
   broadcaster: EventsBroadcaster;
 }

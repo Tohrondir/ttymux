@@ -63,10 +63,7 @@ export function registerRestRoutes(fastify: FastifyInstance, deps: TransportDeps
       return;
     }
 
-    const override = { ...deps.portOverrides[id] };
-    applyOverrideField(override, 'name', parsed.data.name);
-    applyOverrideField(override, 'group', parsed.data.group);
-    deps.portOverrides[id] = override;
+    deps.portOverrides.update(id, parsed.data);
 
     const port = buildPortInfo(id, deps.serialManager, deps.sessionHub, deps.portOverrides)!;
     deps.sessionHub.broadcastStatus(id, port);
@@ -75,14 +72,4 @@ export function registerRestRoutes(fastify: FastifyInstance, deps: TransportDeps
     const body: GetPortResponse = { port };
     return body;
   });
-}
-
-function applyOverrideField<K extends 'name' | 'group'>(
-  override: { name?: string; group?: string },
-  key: K,
-  value: string | null | undefined,
-): void {
-  if (value === undefined) return; // omitted -> leave unchanged
-  if (value === null || value === '') delete override[key];
-  else override[key] = value;
 }

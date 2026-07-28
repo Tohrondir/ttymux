@@ -21,6 +21,11 @@ services:
     volumes:
       - /dev:/dev
       - ./logs:/app/logs
+      # Renames/groups made from the sidebar UI are saved here as JSON, so
+      # they survive `docker compose down`/`up` and image rebuilds. Without
+      # this mount they still work, just only for as long as the container
+      # itself lives.
+      - ./data:/app/data
       # Uncomment to use a config file (see config.example.yaml):
       # - ./ttymux.config.yaml:/app/ttymux.config.yaml:ro
 

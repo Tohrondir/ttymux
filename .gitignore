@@ -10,3 +10,5 @@ coverage/
 config.yaml
 config.yml
 *.tsbuildinfo
+/logs/
+/data/
