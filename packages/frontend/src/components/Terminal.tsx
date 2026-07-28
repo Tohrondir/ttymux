@@ -2,6 +2,7 @@ import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import { FitAddon } from '@xterm/addon-fit';
 import { Terminal as XtermTerminal } from '@xterm/xterm';
 import '@xterm/xterm/css/xterm.css';
+import { LineHighlighter } from '../utils/LineHighlighter.js';
 
 export interface TerminalHandle {
   write(data: Uint8Array): void;
@@ -11,15 +12,20 @@ export interface TerminalHandle {
 export interface TerminalProps {
   readOnly: boolean;
   onInput: (data: Uint8Array) => void;
+  /** Best-effort log-pattern coloring for plain text; off returns to exact raw byte passthrough. */
+  highlightEnabled: boolean;
 }
 
 const encoder = new TextEncoder();
 
-export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Terminal({ readOnly, onInput }, ref) {
+export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Terminal({ readOnly, onInput, highlightEnabled }, ref) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const termRef = useRef<XtermTerminal | null>(null);
+  const highlighterRef = useRef<LineHighlighter | null>(null);
   const onInputRef = useRef(onInput);
   onInputRef.current = onInput;
+  const highlightEnabledRef = useRef(highlightEnabled);
+  highlightEnabledRef.current = highlightEnabled;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -47,8 +53,11 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     resizeObserver.observe(container);
 
     termRef.current = term;
+    highlighterRef.current = new LineHighlighter((text) => termRef.current?.write(text));
 
     return () => {
+      highlighterRef.current?.flush();
+      highlighterRef.current = null;
       dataDisposable.dispose();
       resizeObserver.disconnect();
       term.dispose();
@@ -60,13 +69,19 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     if (termRef.current) termRef.current.options.disableStdin = readOnly;
   }, [readOnly]);
 
+  useEffect(() => {
+    if (!highlightEnabled) highlighterRef.current?.flush();
+  }, [highlightEnabled]);
+
   useImperativeHandle(
     ref,
     () => ({
       write(data) {
-        termRef.current?.write(data);
+        if (highlightEnabledRef.current) highlighterRef.current?.push(data);
+        else termRef.current?.write(data);
       },
       clear() {
+        highlighterRef.current?.reset();
         termRef.current?.clear();
       },
     }),

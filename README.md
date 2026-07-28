@@ -29,6 +29,11 @@ where a serial console is still the only way in.
   watch and drive several consoles at once, side by side. Which ports are
   in your session and how many columns to use is remembered per browser,
   so everyone can set up their own layout without affecting anyone else's.
+- **Log highlighting**: colors common patterns (error/warning/info levels,
+  timestamps, IP/MAC addresses, hex values, quoted strings) in plain-text
+  output, without touching the underlying bytes. Toggle per browser from the
+  console header. Devices that already send their own ANSI colors are left
+  alone entirely.
 - **Disk logging with rotation**, per port, path configurable.
 
 ## Quick start

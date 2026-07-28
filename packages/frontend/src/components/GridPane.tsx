@@ -4,7 +4,13 @@ import { StatusDot } from './StatusDot.js';
 import { Terminal, type TerminalHandle } from './Terminal.js';
 import { WriterBanner } from './WriterBanner.js';
 
-export function GridPane({ portId, onRemove }: { portId: string; onRemove: (id: string) => void }) {
+export interface GridPaneProps {
+  portId: string;
+  onRemove: (id: string) => void;
+  highlightEnabled: boolean;
+}
+
+export function GridPane({ portId, onRemove, highlightEnabled }: GridPaneProps) {
   const terminalRef = useRef<TerminalHandle | null>(null);
 
   const { connected, port, writeToken, isWriter, controlDeniedReason, requestControl, setFreeForAll, sendInput } = useConsoleSocket(portId, {
@@ -47,7 +53,7 @@ export function GridPane({ portId, onRemove }: { portId: string; onRemove: (id: 
       />
 
       <div className="relative min-h-0 flex-1 p-1">
-        <Terminal ref={terminalRef} readOnly={!canType} onInput={sendInput} />
+        <Terminal ref={terminalRef} readOnly={!canType} onInput={sendInput} highlightEnabled={highlightEnabled} />
       </div>
     </div>
   );

@@ -6,7 +6,13 @@ import { StatusDot } from './StatusDot.js';
 import { Terminal, type TerminalHandle } from './Terminal.js';
 import { WriterBanner } from './WriterBanner.js';
 
-export function ConsolePane({ portId }: { portId: string }) {
+export interface ConsolePaneProps {
+  portId: string;
+  highlightEnabled: boolean;
+  onToggleHighlight: (enabled: boolean) => void;
+}
+
+export function ConsolePane({ portId, highlightEnabled, onToggleHighlight }: ConsolePaneProps) {
   const terminalRef = useRef<TerminalHandle | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -46,6 +52,17 @@ export function ConsolePane({ portId }: { portId: string }) {
           {!connected && <span className="text-status-error">Reconnecting&hellip;</span>}
           <button
             type="button"
+            onClick={() => onToggleHighlight(!highlightEnabled)}
+            aria-pressed={highlightEnabled}
+            title="Color log levels, timestamps, IPs, and other common patterns in plain-text output"
+            className={`rounded-md border px-2 py-1 transition-colors ${
+              highlightEnabled ? 'border-signal-dim text-signal' : 'border-line text-fog hover:border-signal-dim hover:text-paper'
+            }`}
+          >
+            Highlight
+          </button>
+          <button
+            type="button"
             onClick={() => setSettingsOpen((open) => !open)}
             aria-label="Connection settings"
             aria-pressed={settingsOpen}
@@ -67,7 +84,7 @@ export function ConsolePane({ portId }: { portId: string }) {
       />
 
       <div className="relative min-h-0 flex-1 p-2">
-        <Terminal ref={terminalRef} readOnly={!canType} onInput={sendInput} />
+        <Terminal ref={terminalRef} readOnly={!canType} onInput={sendInput} highlightEnabled={highlightEnabled} />
         <SettingsPanel
           open={settingsOpen}
           onClose={() => setSettingsOpen(false)}

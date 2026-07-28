@@ -7,9 +7,10 @@ type ColumnOption = (typeof COLUMN_OPTIONS)[number];
 export interface GridViewProps {
   sessionPortIds: string[];
   onRemoveFromSession: (id: string) => void;
+  highlightEnabled: boolean;
 }
 
-export function GridView({ sessionPortIds, onRemoveFromSession }: GridViewProps) {
+export function GridView({ sessionPortIds, onRemoveFromSession, highlightEnabled }: GridViewProps) {
   const [columns, setColumns] = useLocalStorageState<ColumnOption>('ttymux.gridColumns', 'auto');
 
   return (
@@ -51,7 +52,7 @@ export function GridView({ sessionPortIds, onRemoveFromSession }: GridViewProps)
             }}
           >
             {sessionPortIds.map((id) => (
-              <GridPane key={id} portId={id} onRemove={onRemoveFromSession} />
+              <GridPane key={id} portId={id} onRemove={onRemoveFromSession} highlightEnabled={highlightEnabled} />
             ))}
           </div>
         )}
