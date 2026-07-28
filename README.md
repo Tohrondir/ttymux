@@ -25,6 +25,10 @@ where a serial console is still the only way in.
   "free-for-all" mode turns that off when you actually want everyone to type.
 - **Hotplug aware**: unplug a device and it's marked offline; plug it back in
   and ttymux reconnects automatically with backoff.
+- **Grid view**: pin any set of ports from the sidebar to watch and drive
+  several consoles at once, side by side. Which ports are pinned and how
+  many columns to use is remembered per browser, so everyone can set up
+  their own layout without affecting anyone else's.
 - **Disk logging with rotation**, per port, path configurable.
 
 ## Quick start

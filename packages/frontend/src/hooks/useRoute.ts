@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 
-export type Route = { name: 'none' } | { name: 'console'; portId: string };
+export type Route = { name: 'none' } | { name: 'console'; portId: string } | { name: 'grid' };
 
 function parseRoute(pathname: string): Route {
   const match = pathname.match(/^\/console\/(.+)$/);
   if (match) return { name: 'console', portId: decodeURIComponent(match[1]) };
+  if (pathname === '/grid') return { name: 'grid' };
   return { name: 'none' };
 }
 

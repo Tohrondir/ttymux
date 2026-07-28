@@ -4,7 +4,14 @@ import { api } from '../api/client.js';
 import { navigate } from '../hooks/useRoute.js';
 import { StatusDot } from './StatusDot.js';
 
-export function SidebarPortItem({ port, selected }: { port: PortInfo; selected: boolean }) {
+export interface SidebarPortItemProps {
+  port: PortInfo;
+  selected: boolean;
+  pinned: boolean;
+  onTogglePin: (id: string) => void;
+}
+
+export function SidebarPortItem({ port, selected, pinned, onTogglePin }: SidebarPortItemProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
   const [renameError, setRenameError] = useState<string | null>(null);
@@ -65,6 +72,22 @@ export function SidebarPortItem({ port, selected }: { port: PortInfo; selected: 
             </p>
             {port.friendlyName && <p className="truncate font-mono text-[11px] text-fog">{port.path}</p>}
           </div>
+        )}
+
+        {!editing && (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onTogglePin(port.id);
+            }}
+            aria-label={pinned ? 'Unpin from grid view' : 'Pin to grid view'}
+            aria-pressed={pinned}
+            title={pinned ? 'Unpin from grid view' : 'Pin to grid view'}
+            className={`inline-flex shrink-0 items-center justify-center ${pinned ? 'text-signal' : 'text-fog opacity-0 hover:text-paper focus-visible:opacity-100 group-hover:opacity-100'}`}
+          >
+            {pinned ? '★' : '☆'}
+          </button>
         )}
 
         {!editing && (
