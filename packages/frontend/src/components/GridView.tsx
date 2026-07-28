@@ -1,12 +1,15 @@
 import { useLocalStorageState } from '../hooks/useLocalStorageState.js';
-import { usePinnedPorts } from '../hooks/usePinnedPorts.js';
 import { GridPane } from './GridPane.js';
 
 const COLUMN_OPTIONS = ['auto', 1, 2, 3, 4] as const;
 type ColumnOption = (typeof COLUMN_OPTIONS)[number];
 
-export function GridView() {
-  const { pinnedIds, unpin } = usePinnedPorts();
+export interface GridViewProps {
+  sessionPortIds: string[];
+  onRemoveFromSession: (id: string) => void;
+}
+
+export function GridView({ sessionPortIds, onRemoveFromSession }: GridViewProps) {
   const [columns, setColumns] = useLocalStorageState<ColumnOption>('ttymux.gridColumns', 'auto');
 
   return (
@@ -14,7 +17,7 @@ export function GridView() {
       <header className="flex items-center justify-between gap-4 border-b border-line px-4 py-3">
         <div>
           <h1 className="text-sm font-medium text-paper">Grid view</h1>
-          <p className="text-xs text-fog">Pin ports from the sidebar to see them here at the same time.</p>
+          <p className="text-xs text-fog">Add ports from the sidebar to see them here at the same time.</p>
         </div>
         <label className="flex items-center gap-2 text-xs text-fog">
           Columns
@@ -33,10 +36,10 @@ export function GridView() {
       </header>
 
       <div className="min-h-0 flex-1 overflow-auto p-3">
-        {pinnedIds.length === 0 ? (
+        {sessionPortIds.length === 0 ? (
           <div className="flex h-full items-center justify-center">
             <p className="max-w-sm text-center text-sm text-fog">
-              Nothing pinned yet. Hover a port in the sidebar and click the pin icon to add it here.
+              Nothing added yet. Hover a port in the sidebar and click the + icon to add it here.
             </p>
           </div>
         ) : (
@@ -47,8 +50,8 @@ export function GridView() {
               gridAutoRows: 'minmax(280px, 1fr)',
             }}
           >
-            {pinnedIds.map((id) => (
-              <GridPane key={id} portId={id} onUnpin={unpin} />
+            {sessionPortIds.map((id) => (
+              <GridPane key={id} portId={id} onRemove={onRemoveFromSession} />
             ))}
           </div>
         )}

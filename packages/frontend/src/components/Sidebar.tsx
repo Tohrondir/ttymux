@@ -1,15 +1,21 @@
 import { useMemo } from 'react';
 import type { PortInfo } from '@ttymux/shared';
-import { usePinnedPorts } from '../hooks/usePinnedPorts.js';
 import { usePorts } from '../hooks/usePorts.js';
 import { navigate } from '../hooks/useRoute.js';
 import { groupPorts } from '../utils/groupPorts.js';
 import { SidebarPortItem } from './SidebarPortItem.js';
 import { TokenPrompt } from './TokenPrompt.js';
 
-export function Sidebar({ selectedPortId, gridActive }: { selectedPortId: string | null; gridActive: boolean }) {
+export interface SidebarProps {
+  selectedPortId: string | null;
+  gridActive: boolean;
+  sessionPortIds: string[];
+  isInSession: (id: string) => boolean;
+  onToggleSession: (id: string) => void;
+}
+
+export function Sidebar({ selectedPortId, gridActive, sessionPortIds, isInSession, onToggleSession }: SidebarProps) {
   const { ports, loading, error, authRequired, refresh } = usePorts();
-  const { pinnedIds, isPinned, togglePin } = usePinnedPorts();
 
   const okPorts = useMemo(() => ports.filter((p) => p.status !== 'error'), [ports]);
   const errorPorts = useMemo(
@@ -33,7 +39,7 @@ export function Sidebar({ selectedPortId, gridActive }: { selectedPortId: string
         }`}
       >
         <span>&#9635; Grid view</span>
-        {pinnedIds.length > 0 && <span className="text-xs text-fog">{pinnedIds.length}</span>}
+        {sessionPortIds.length > 0 && <span className="text-xs text-fog">{sessionPortIds.length}</span>}
       </button>
 
       <div className="flex-1 overflow-y-auto px-2 py-2">
@@ -56,7 +62,13 @@ export function Sidebar({ selectedPortId, gridActive }: { selectedPortId: string
           <div key={group ?? '__ungrouped'} className="mb-3">
             {group && <h2 className="mb-1 px-2 text-[11px] font-medium uppercase tracking-wider text-fog">{group}</h2>}
             {list.map((port) => (
-              <SidebarPortItem key={port.id} port={port} selected={port.id === selectedPortId} pinned={isPinned(port.id)} onTogglePin={togglePin} />
+              <SidebarPortItem
+                key={port.id}
+                port={port}
+                selected={port.id === selectedPortId}
+                inSession={isInSession(port.id)}
+                onToggleSession={onToggleSession}
+              />
             ))}
           </div>
         ))}
@@ -67,7 +79,13 @@ export function Sidebar({ selectedPortId, gridActive }: { selectedPortId: string
               Errors ({errorPorts.length})
             </summary>
             {errorPorts.map((port: PortInfo) => (
-              <SidebarPortItem key={port.id} port={port} selected={port.id === selectedPortId} pinned={isPinned(port.id)} onTogglePin={togglePin} />
+              <SidebarPortItem
+                key={port.id}
+                port={port}
+                selected={port.id === selectedPortId}
+                inSession={isInSession(port.id)}
+                onToggleSession={onToggleSession}
+              />
             ))}
           </details>
         )}

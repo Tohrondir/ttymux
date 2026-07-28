@@ -7,11 +7,11 @@ import { StatusDot } from './StatusDot.js';
 export interface SidebarPortItemProps {
   port: PortInfo;
   selected: boolean;
-  pinned: boolean;
-  onTogglePin: (id: string) => void;
+  inSession: boolean;
+  onToggleSession: (id: string) => void;
 }
 
-export function SidebarPortItem({ port, selected, pinned, onTogglePin }: SidebarPortItemProps) {
+export function SidebarPortItem({ port, selected, inSession, onToggleSession }: SidebarPortItemProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
   const [renameError, setRenameError] = useState<string | null>(null);
@@ -79,14 +79,14 @@ export function SidebarPortItem({ port, selected, pinned, onTogglePin }: Sidebar
             type="button"
             onClick={(event) => {
               event.stopPropagation();
-              onTogglePin(port.id);
+              onToggleSession(port.id);
             }}
-            aria-label={pinned ? 'Unpin from grid view' : 'Pin to grid view'}
-            aria-pressed={pinned}
-            title={pinned ? 'Unpin from grid view' : 'Pin to grid view'}
-            className={`inline-flex shrink-0 items-center justify-center ${pinned ? 'text-signal' : 'text-fog opacity-0 hover:text-paper focus-visible:opacity-100 group-hover:opacity-100'}`}
+            aria-label={inSession ? 'Remove from session' : 'Add to session'}
+            aria-pressed={inSession}
+            title={inSession ? 'Remove from session' : 'Add to session'}
+            className={`inline-flex shrink-0 items-center justify-center font-medium ${inSession ? 'text-signal' : 'text-fog opacity-0 hover:text-paper focus-visible:opacity-100 group-hover:opacity-100'}`}
           >
-            {pinned ? '★' : '☆'}
+            +
           </button>
         )}
 

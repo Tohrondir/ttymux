@@ -4,7 +4,7 @@ import { StatusDot } from './StatusDot.js';
 import { Terminal, type TerminalHandle } from './Terminal.js';
 import { WriterBanner } from './WriterBanner.js';
 
-export function GridPane({ portId, onUnpin }: { portId: string; onUnpin: (id: string) => void }) {
+export function GridPane({ portId, onRemove }: { portId: string; onRemove: (id: string) => void }) {
   const terminalRef = useRef<TerminalHandle | null>(null);
 
   const { connected, port, writeToken, isWriter, controlDeniedReason, requestControl, setFreeForAll, sendInput } = useConsoleSocket(portId, {
@@ -29,9 +29,9 @@ export function GridPane({ portId, onUnpin }: { portId: string; onUnpin: (id: st
         </div>
         <button
           type="button"
-          onClick={() => onUnpin(portId)}
-          aria-label="Remove from grid"
-          title="Remove from grid"
+          onClick={() => onRemove(portId)}
+          aria-label="Remove from grid view"
+          title="Remove from grid view"
           className="inline-flex shrink-0 items-center justify-center text-fog hover:text-paper"
         >
           &#10005;
