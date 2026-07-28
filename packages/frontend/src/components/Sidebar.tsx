@@ -26,10 +26,15 @@ export function Sidebar({ selectedPortId, gridActive, sessionPortIds, isInSessio
 
   return (
     <aside className="flex w-72 shrink-0 flex-col border-r border-line bg-panel">
-      <div className="border-b border-line px-4 py-3">
+      <button
+        type="button"
+        onClick={() => navigate('/')}
+        title="Back to no active session"
+        className="border-b border-line px-4 py-3 text-left transition-colors hover:bg-panel-raised"
+      >
         <h1 className="font-mono text-sm font-semibold tracking-tight text-paper">ttymux</h1>
         <p className="text-xs text-fog">Serial consoles on this host</p>
-      </div>
+      </button>
 
       <button
         type="button"
