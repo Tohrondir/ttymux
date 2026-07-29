@@ -21,6 +21,9 @@ export function usePorts(): UsePortsResult {
 
   useEffect(() => {
     let cancelled = false;
+    // Re-show loading on every refresh() call, not just the initial mount
+    // (which already starts `loading` true via its useState initializer).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
 
     api

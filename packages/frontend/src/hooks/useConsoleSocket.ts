@@ -36,13 +36,13 @@ export function useConsoleSocket(
   dataHandlers: ConsoleDataHandlers,
   { displayName, lurker }: UseConsoleSocketOptions = {},
 ): UseConsoleSocketResult {
-  const clientIdRef = useRef<string | null>(null);
-  if (!clientIdRef.current) clientIdRef.current = generateClientId();
-  const clientId = clientIdRef.current;
+  const [clientId] = useState(() => generateClientId());
 
   const handleRef = useRef<ReturnType<typeof connectConsoleSocket> | null>(null);
   const dataHandlersRef = useRef(dataHandlers);
-  dataHandlersRef.current = dataHandlers;
+  useEffect(() => {
+    dataHandlersRef.current = dataHandlers;
+  });
 
   const [connected, setConnected] = useState(false);
   const [port, setPort] = useState<PortInfo | null>(null);
@@ -51,6 +51,11 @@ export function useConsoleSocket(
   const [controlDeniedReason, setControlDeniedReason] = useState<string | null>(null);
 
   useEffect(() => {
+    // Reset transient view state for the new connection (portId/displayName/lurker
+    // changed): the server resends scrollback/status/viewers/writerChanged on
+    // attach, so this is just clearing stale state from the old connection for
+    // the gap until those arrive, not state that belongs in render.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPort(null);
     setViewers([]);
     setWriteToken(EMPTY_WRITE_TOKEN);
