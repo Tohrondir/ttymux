@@ -44,12 +44,21 @@ export function ConsolePane({ portId, highlightEnabled, onToggleHighlight }: Con
           <h1 className="truncate text-sm font-medium text-paper">{port?.friendlyName ?? port?.path ?? portId}</h1>
           <p className="truncate font-mono text-xs text-fog">{portId}</p>
         </div>
-        <div className="flex shrink-0 items-center gap-4 text-xs text-fog">
+        <div className="flex flex-wrap shrink-0 items-center justify-end gap-3 text-xs text-fog">
           {port && <StatusDot status={port.status} hasWriter={port.writer !== null} />}
           <span title={viewers.map((v) => v.displayName ?? 'Anonymous').join(', ')}>
             {viewers.length} {viewers.length === 1 ? 'viewer' : 'viewers'}
           </span>
           {!connected && <span className="text-status-error">Reconnecting&hellip;</span>}
+
+          <WriterBanner
+            writeToken={writeToken}
+            isWriter={isWriter}
+            deniedReason={controlDeniedReason}
+            onRequestControl={requestControl}
+            onToggleFreeForAll={setFreeForAll}
+          />
+
           <button
             type="button"
             onClick={() => onToggleHighlight(!highlightEnabled)}
@@ -74,14 +83,6 @@ export function ConsolePane({ portId, highlightEnabled, onToggleHighlight }: Con
           </button>
         </div>
       </header>
-
-      <WriterBanner
-        writeToken={writeToken}
-        isWriter={isWriter}
-        deniedReason={controlDeniedReason}
-        onRequestControl={requestControl}
-        onToggleFreeForAll={setFreeForAll}
-      />
 
       <div className="relative min-h-0 flex-1 p-2">
         <Terminal ref={terminalRef} readOnly={!canType} onInput={sendInput} highlightEnabled={highlightEnabled} />

@@ -8,52 +8,45 @@ export interface WriterBannerProps {
   onToggleFreeForAll: (enabled: boolean) => void;
 }
 
+/** Compact control-state group meant to sit inline in a header row, not as a full-width bar of its own. */
 export function WriterBanner({ writeToken, isWriter, deniedReason, onRequestControl, onToggleFreeForAll }: WriterBannerProps) {
-  const canType = isWriter || writeToken.freeForAll;
-
   return (
-    <div
-      className={`flex flex-wrap items-center justify-between gap-3 border-b px-4 py-2 text-sm ${
-        canType ? 'border-status-online/30 bg-status-online/10' : 'border-signal-dim/40 bg-signal-dim/10'
-      }`}
-    >
-      <div className="flex items-center gap-2">
-        {writeToken.freeForAll ? (
-          <span className="text-fog">Free-for-all &mdash; anyone attached can type.</span>
-        ) : writeToken.holder ? (
-          isWriter ? (
-            <span className="font-medium text-status-online">You have control.</span>
-          ) : (
-            <span className="text-fog">
-              <span className="font-medium text-paper">{writeToken.holderName ?? 'Someone'}</span> has control.
-            </span>
-          )
+    <div className="flex shrink-0 items-center gap-2">
+      {writeToken.freeForAll ? (
+        <span className="text-fog">Free-for-all</span>
+      ) : writeToken.holder ? (
+        isWriter ? (
+          <span className="font-medium text-status-online">You have control</span>
         ) : (
-          <span className="text-fog">Read-only &mdash; no one has taken control yet.</span>
-        )}
-        {deniedReason && <span className="text-status-error">({deniedReason})</span>}
-      </div>
+          <span className="truncate text-fog">
+            <span className="font-medium text-paper">{writeToken.holderName ?? 'Someone'}</span> has control
+          </span>
+        )
+      ) : (
+        <span className="text-fog">Read-only</span>
+      )}
 
-      <div className="flex items-center gap-3">
-        <label className="flex items-center gap-1.5 text-xs text-fog">
-          <input
-            type="checkbox"
-            checked={writeToken.freeForAll}
-            onChange={(event) => onToggleFreeForAll(event.target.checked)}
-            className="accent-signal"
-          />
-          Free-for-all
-        </label>
-        {!writeToken.freeForAll && !isWriter && (
-          <button
-            type="button"
-            onClick={onRequestControl}
-            className="rounded-md bg-signal px-3 py-1 text-xs font-medium text-ink transition-[filter] hover:brightness-110"
-          >
-            Take control
-          </button>
-        )}
-      </div>
+      {deniedReason && <span className="text-status-error">({deniedReason})</span>}
+
+      <label className="flex items-center gap-1 text-fog" title="Free-for-all: anyone attached can type, no need to take control">
+        <input
+          type="checkbox"
+          checked={writeToken.freeForAll}
+          onChange={(event) => onToggleFreeForAll(event.target.checked)}
+          className="accent-signal"
+        />
+        FFA
+      </label>
+
+      {!writeToken.freeForAll && !isWriter && (
+        <button
+          type="button"
+          onClick={onRequestControl}
+          className="shrink-0 rounded-md bg-signal px-2 py-0.5 font-medium text-ink transition-[filter] hover:brightness-110"
+        >
+          Take control
+        </button>
+      )}
     </div>
   );
 }
