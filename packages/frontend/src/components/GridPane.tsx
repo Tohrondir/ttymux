@@ -1,7 +1,8 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useConsoleSocket } from '../hooks/useConsoleSocket.js';
 import { StatusDot } from './StatusDot.js';
 import { Terminal, type TerminalHandle } from './Terminal.js';
+import { TerminalSearchBar } from './TerminalSearchBar.js';
 import { WriterBanner } from './WriterBanner.js';
 
 export interface GridPaneProps {
@@ -12,6 +13,7 @@ export interface GridPaneProps {
 
 export function GridPane({ portId, onRemove, highlightEnabled }: GridPaneProps) {
   const terminalRef = useRef<TerminalHandle | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const { connected, port, writeToken, isWriter, controlDeniedReason, requestControl, setFreeForAll, sendInput } = useConsoleSocket(portId, {
     onScrollback: (bytes) => {
@@ -24,7 +26,15 @@ export function GridPane({ portId, onRemove, highlightEnabled }: GridPaneProps) 
   const canType = isWriter || writeToken.freeForAll;
 
   return (
-    <div className="flex min-h-0 flex-col overflow-hidden rounded-md border border-line bg-ink">
+    <div
+      className="flex min-h-0 flex-col overflow-hidden rounded-md border border-line bg-ink"
+      onKeyDownCapture={(event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'f') {
+          event.preventDefault();
+          setSearchOpen(true);
+        }
+      }}
+    >
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-line px-2 py-1.5 text-[11px]">
         <div className="flex min-w-0 items-center gap-2">
           {port && <StatusDot status={port.status} hasWriter={port.writer !== null} showLabel={false} />}
@@ -44,6 +54,15 @@ export function GridPane({ portId, onRemove, highlightEnabled }: GridPaneProps) 
           />
           <button
             type="button"
+            onClick={() => setSearchOpen((open) => !open)}
+            aria-pressed={searchOpen}
+            title="Find in scrollback (Ctrl+F)"
+            className={searchOpen ? 'text-paper' : 'text-fog hover:text-paper'}
+          >
+            Find
+          </button>
+          <button
+            type="button"
             onClick={() => onRemove(portId)}
             aria-label="Remove from grid view"
             title="Remove from grid view"
@@ -56,6 +75,7 @@ export function GridPane({ portId, onRemove, highlightEnabled }: GridPaneProps) 
 
       <div className="relative min-h-0 flex-1 p-1">
         <Terminal ref={terminalRef} readOnly={!canType} onInput={sendInput} highlightEnabled={highlightEnabled} />
+        {searchOpen && <TerminalSearchBar terminalRef={terminalRef} onClose={() => setSearchOpen(false)} />}
       </div>
     </div>
   );

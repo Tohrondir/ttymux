@@ -4,6 +4,7 @@ import { useConsoleSocket } from '../hooks/useConsoleSocket.js';
 import { SettingsPanel } from './SettingsPanel.js';
 import { StatusDot } from './StatusDot.js';
 import { Terminal, type TerminalHandle } from './Terminal.js';
+import { TerminalSearchBar } from './TerminalSearchBar.js';
 import { WriterBanner } from './WriterBanner.js';
 
 export interface ConsolePaneProps {
@@ -15,6 +16,7 @@ export interface ConsolePaneProps {
 export function ConsolePane({ portId, highlightEnabled, onToggleHighlight }: ConsolePaneProps) {
   const terminalRef = useRef<TerminalHandle | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const {
     connected,
@@ -38,7 +40,15 @@ export function ConsolePane({ portId, highlightEnabled, onToggleHighlight }: Con
   const canType = isWriter || writeToken.freeForAll;
 
   return (
-    <div className="flex h-screen flex-col bg-ink">
+    <div
+      className="flex h-screen flex-col bg-ink"
+      onKeyDownCapture={(event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'f') {
+          event.preventDefault();
+          setSearchOpen(true);
+        }
+      }}
+    >
       <header className="flex items-center justify-between gap-4 border-b border-line px-4 py-3">
         <div className="min-w-0">
           <h1 className="truncate text-sm font-medium text-paper">{port?.friendlyName ?? port?.path ?? portId}</h1>
@@ -59,6 +69,17 @@ export function ConsolePane({ portId, highlightEnabled, onToggleHighlight }: Con
             onToggleFreeForAll={setFreeForAll}
           />
 
+          <button
+            type="button"
+            onClick={() => setSearchOpen((open) => !open)}
+            aria-pressed={searchOpen}
+            title="Find in scrollback (Ctrl+F)"
+            className={`rounded-md border px-2 py-1 transition-colors ${
+              searchOpen ? 'border-signal-dim text-paper' : 'border-line text-fog hover:border-signal-dim hover:text-paper'
+            }`}
+          >
+            Find
+          </button>
           <button
             type="button"
             onClick={() => onToggleHighlight(!highlightEnabled)}
@@ -86,6 +107,7 @@ export function ConsolePane({ portId, highlightEnabled, onToggleHighlight }: Con
 
       <div className="relative min-h-0 flex-1 p-2">
         <Terminal ref={terminalRef} readOnly={!canType} onInput={sendInput} highlightEnabled={highlightEnabled} />
+        {searchOpen && <TerminalSearchBar terminalRef={terminalRef} onClose={() => setSearchOpen(false)} />}
         <SettingsPanel
           open={settingsOpen}
           onClose={() => setSettingsOpen(false)}

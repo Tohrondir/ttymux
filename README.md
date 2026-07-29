@@ -34,6 +34,9 @@ where a serial console is still the only way in.
   output, without touching the underlying bytes. Toggle per browser from the
   console header. Devices that already send their own ANSI colors are left
   alone entirely.
+- **Search scrollback**: Ctrl+F (or the Find button) opens an in-terminal
+  search with next/previous and a match count, without triggering the
+  browser's own find bar.
 - **Disk logging with rotation**, per port, path configurable.
 
 ## Quick start

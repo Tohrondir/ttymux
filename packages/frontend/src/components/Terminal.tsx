@@ -1,12 +1,23 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import { FitAddon } from '@xterm/addon-fit';
+import { SearchAddon, type ISearchOptions } from '@xterm/addon-search';
 import { Terminal as XtermTerminal } from '@xterm/xterm';
 import '@xterm/xterm/css/xterm.css';
 import { LineHighlighter } from '../utils/LineHighlighter.js';
 
+export interface SearchResult {
+  resultIndex: number;
+  resultCount: number;
+}
+
 export interface TerminalHandle {
   write(data: Uint8Array): void;
   clear(): void;
+  findNext(term: string, options?: ISearchOptions): boolean;
+  findPrevious(term: string, options?: ISearchOptions): boolean;
+  clearSearch(): void;
+  /** Returns an unsubscribe function. */
+  onSearchResultsChange(callback: (result: SearchResult) => void): () => void;
 }
 
 export interface TerminalProps {
@@ -18,9 +29,19 @@ export interface TerminalProps {
 
 const encoder = new TextEncoder();
 
+const SEARCH_DECORATIONS = {
+  matchBackground: '#3a3626',
+  matchBorder: '#5b6864',
+  matchOverviewRuler: '#5b6864',
+  activeMatchBackground: '#e8a33d',
+  activeMatchBorder: '#e8a33d',
+  activeMatchColorOverviewRuler: '#e8a33d',
+};
+
 export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Terminal({ readOnly, onInput, highlightEnabled }, ref) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const termRef = useRef<XtermTerminal | null>(null);
+  const searchAddonRef = useRef<SearchAddon | null>(null);
   const highlighterRef = useRef<LineHighlighter | null>(null);
   const onInputRef = useRef(onInput);
   onInputRef.current = onInput;
@@ -44,6 +65,8 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     });
     const fit = new FitAddon();
     term.loadAddon(fit);
+    const searchAddon = new SearchAddon();
+    term.loadAddon(searchAddon);
     term.open(container);
     fit.fit();
 
@@ -53,11 +76,13 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     resizeObserver.observe(container);
 
     termRef.current = term;
+    searchAddonRef.current = searchAddon;
     highlighterRef.current = new LineHighlighter((text) => termRef.current?.write(text));
 
     return () => {
       highlighterRef.current?.flush();
       highlighterRef.current = null;
+      searchAddonRef.current = null;
       dataDisposable.dispose();
       resizeObserver.disconnect();
       term.dispose();
@@ -83,6 +108,19 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
       clear() {
         highlighterRef.current?.reset();
         termRef.current?.clear();
+      },
+      findNext(term, options) {
+        return searchAddonRef.current?.findNext(term, { decorations: SEARCH_DECORATIONS, ...options }) ?? false;
+      },
+      findPrevious(term, options) {
+        return searchAddonRef.current?.findPrevious(term, { decorations: SEARCH_DECORATIONS, ...options }) ?? false;
+      },
+      clearSearch() {
+        searchAddonRef.current?.clearDecorations();
+      },
+      onSearchResultsChange(callback) {
+        const disposable = searchAddonRef.current?.onDidChangeResults(callback);
+        return () => disposable?.dispose();
       },
     }),
     [],
