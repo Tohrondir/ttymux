@@ -24,6 +24,27 @@ describe('SessionHub write-token arbitration', () => {
     expect(hub.canWrite('p1', 'b')).toBe(false);
   });
 
+  it('a lurker does not auto-claim control even as the first viewer, but can still request it', () => {
+    const hub = new SessionHub();
+    hub.attach('p1', makeClient('a'), { lurker: true });
+
+    expect(hub.getWriteTokenState('p1').holder).toBeNull();
+    expect(hub.canWrite('p1', 'a')).toBe(false);
+
+    hub.requestControl('p1', 'a');
+
+    expect(hub.getWriteTokenState('p1').holder).toBe('a');
+  });
+
+  it('a non-lurker still auto-claims control as the first viewer when a later viewer is a lurker', () => {
+    const hub = new SessionHub();
+    hub.attach('p1', makeClient('a'));
+    hub.attach('p1', makeClient('b'), { lurker: true });
+
+    expect(hub.getWriteTokenState('p1').holder).toBe('a');
+    expect(hub.canWrite('p1', 'b')).toBe(false);
+  });
+
   it('does not auto-grant a holder when free-for-all is already on', () => {
     const hub = new SessionHub();
     hub.setFreeForAll('p1', true);

@@ -25,7 +25,17 @@ export interface ConsoleDataHandlers {
   onOutput: (bytes: Uint8Array) => void;
 }
 
-export function useConsoleSocket(portId: string, dataHandlers: ConsoleDataHandlers, displayName?: string): UseConsoleSocketResult {
+export interface UseConsoleSocketOptions {
+  displayName?: string;
+  /** Skip auto-claiming write control as the first viewer; can still request it later via `requestControl`. */
+  lurker?: boolean;
+}
+
+export function useConsoleSocket(
+  portId: string,
+  dataHandlers: ConsoleDataHandlers,
+  { displayName, lurker }: UseConsoleSocketOptions = {},
+): UseConsoleSocketResult {
   const clientIdRef = useRef<string | null>(null);
   if (!clientIdRef.current) clientIdRef.current = generateClientId();
   const clientId = clientIdRef.current;
@@ -48,6 +58,7 @@ export function useConsoleSocket(portId: string, dataHandlers: ConsoleDataHandle
 
     const handle = connectConsoleSocket(portId, clientId, {
       displayName,
+      lurker,
       onConnectionChange: setConnected,
       onMessage: (message) => {
         switch (message.type) {
@@ -82,7 +93,7 @@ export function useConsoleSocket(portId: string, dataHandlers: ConsoleDataHandle
       handleRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [portId, displayName]);
+  }, [portId, displayName, lurker]);
 
   return {
     connected,

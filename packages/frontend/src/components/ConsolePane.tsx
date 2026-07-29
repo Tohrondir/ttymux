@@ -12,9 +12,10 @@ export interface ConsolePaneProps {
   portId: string;
   highlightEnabled: boolean;
   onToggleHighlight: (enabled: boolean) => void;
+  lurkerMode: boolean;
 }
 
-export function ConsolePane({ portId, highlightEnabled, onToggleHighlight }: ConsolePaneProps) {
+export function ConsolePane({ portId, highlightEnabled, onToggleHighlight, lurkerMode }: ConsolePaneProps) {
   const terminalRef = useRef<TerminalHandle | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -46,7 +47,7 @@ export function ConsolePane({ portId, highlightEnabled, onToggleHighlight }: Con
       terminalRef.current?.write(bytes);
     },
     onOutput: (bytes) => terminalRef.current?.write(bytes),
-  });
+  }, { lurker: lurkerMode });
 
   const canType = isWriter || writeToken.freeForAll;
 

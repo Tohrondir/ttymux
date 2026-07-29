@@ -40,6 +40,9 @@ where a serial console is still the only way in.
 - **Disk logging with rotation**, per port, path configurable, downloadable
   straight from the console header (concatenates any rotated history into
   one file).
+- **Lurker mode**: a per-browser toggle in the sidebar for using ttymux as a
+  passive display, watching without automatically taking control of whatever
+  you open next. You can still click "Take control" manually at any time.
 
 ## Quick start
 

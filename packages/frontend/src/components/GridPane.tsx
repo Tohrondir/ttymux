@@ -9,19 +9,24 @@ export interface GridPaneProps {
   portId: string;
   onRemove: (id: string) => void;
   highlightEnabled: boolean;
+  lurkerMode: boolean;
 }
 
-export function GridPane({ portId, onRemove, highlightEnabled }: GridPaneProps) {
+export function GridPane({ portId, onRemove, highlightEnabled, lurkerMode }: GridPaneProps) {
   const terminalRef = useRef<TerminalHandle | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
 
-  const { connected, port, writeToken, isWriter, controlDeniedReason, requestControl, setFreeForAll, sendInput } = useConsoleSocket(portId, {
-    onScrollback: (bytes) => {
-      terminalRef.current?.clear();
-      terminalRef.current?.write(bytes);
+  const { connected, port, writeToken, isWriter, controlDeniedReason, requestControl, setFreeForAll, sendInput } = useConsoleSocket(
+    portId,
+    {
+      onScrollback: (bytes) => {
+        terminalRef.current?.clear();
+        terminalRef.current?.write(bytes);
+      },
+      onOutput: (bytes) => terminalRef.current?.write(bytes),
     },
-    onOutput: (bytes) => terminalRef.current?.write(bytes),
-  });
+    { lurker: lurkerMode },
+  );
 
   const canType = isWriter || writeToken.freeForAll;
 

@@ -10,6 +10,7 @@ export default function App() {
   const selectedPortId = route.name === 'console' ? route.portId : null;
   const session = useSessionPorts();
   const [highlightEnabled, setHighlightEnabled] = useLocalStorageState('ttymux.highlightEnabled', true);
+  const [lurkerMode, setLurkerMode] = useLocalStorageState('ttymux.lurkerMode', false);
 
   return (
     <div className="flex h-screen">
@@ -19,16 +20,25 @@ export default function App() {
         sessionPortIds={session.sessionPortIds}
         isInSession={session.isInSession}
         onToggleSession={session.toggleInSession}
+        lurkerMode={lurkerMode}
+        onToggleLurkerMode={setLurkerMode}
       />
       <main className="min-w-0 flex-1">
         {route.name === 'console' && (
-          <ConsolePane key={route.portId} portId={route.portId} highlightEnabled={highlightEnabled} onToggleHighlight={setHighlightEnabled} />
+          <ConsolePane
+            key={route.portId}
+            portId={route.portId}
+            highlightEnabled={highlightEnabled}
+            onToggleHighlight={setHighlightEnabled}
+            lurkerMode={lurkerMode}
+          />
         )}
         {route.name === 'grid' && (
           <GridView
             sessionPortIds={session.sessionPortIds}
             onRemoveFromSession={session.removeFromSession}
             highlightEnabled={highlightEnabled}
+            lurkerMode={lurkerMode}
           />
         )}
       </main>

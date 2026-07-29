@@ -37,7 +37,7 @@ export function registerConsoleRoute(fastify: FastifyInstance, deps: TransportDe
       },
     };
 
-    deps.sessionHub.attach(portId, client);
+    deps.sessionHub.attach(portId, client, { lurker: query.lurker === 'true' });
 
     const scrollback = deps.serialManager.getScrollback(portId);
     if (scrollback.length > 0) {

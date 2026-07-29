@@ -13,11 +13,21 @@ export interface SidebarProps {
   sessionPortIds: string[];
   isInSession: (id: string) => boolean;
   onToggleSession: (id: string) => void;
+  lurkerMode: boolean;
+  onToggleLurkerMode: (enabled: boolean) => void;
 }
 
 const RAIL_WIDTH = 40;
 
-export function Sidebar({ selectedPortId, gridActive, sessionPortIds, isInSession, onToggleSession }: SidebarProps) {
+export function Sidebar({
+  selectedPortId,
+  gridActive,
+  sessionPortIds,
+  isInSession,
+  onToggleSession,
+  lurkerMode,
+  onToggleLurkerMode,
+}: SidebarProps) {
   const { ports, loading, error, authRequired, refresh } = usePorts();
   const { width, isResizing, collapsed, toggleCollapsed, startResize } = useSidebarLayout();
 
@@ -66,6 +76,19 @@ export function Sidebar({ selectedPortId, gridActive, sessionPortIds, isInSessio
           &#9666;
         </button>
       </div>
+
+      <label
+        className="flex cursor-pointer items-center justify-between gap-2 border-b border-line px-4 py-2 text-xs text-fog"
+        title="Join consoles as an observer, without automatically taking control. Applies to the next console you open, not ones already open."
+      >
+        <span>Lurker mode</span>
+        <input
+          type="checkbox"
+          checked={lurkerMode}
+          onChange={(event) => onToggleLurkerMode(event.target.checked)}
+          className="accent-signal"
+        />
+      </label>
 
       <button
         type="button"

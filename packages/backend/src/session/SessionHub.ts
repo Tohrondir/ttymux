@@ -30,14 +30,15 @@ export interface SessionHub {
 export class SessionHub extends EventEmitter {
   private readonly consoles = new Map<PortId, ConsoleState>();
 
-  attach(portId: PortId, client: ClientHandle): void {
+  attach(portId: PortId, client: ClientHandle, options: { lurker?: boolean } = {}): void {
     const state = this.getOrCreate(portId);
     const isFirstViewer = state.viewers.size === 0;
     state.viewers.set(client.clientId, { client, connectedAt: new Date().toISOString() });
 
     // The first person to open an unclaimed console gets control automatically,
     // no point making a lone viewer click "take control" on their own console.
-    if (isFirstViewer && state.writeToken.holder === null && !state.writeToken.freeForAll) {
+    // A lurker opts out of exactly this: they can still request control later.
+    if (isFirstViewer && state.writeToken.holder === null && !state.writeToken.freeForAll && !options.lurker) {
       state.writeToken.holder = client.clientId;
       state.writeToken.holderName = client.displayName;
       state.writeToken.since = new Date().toISOString();

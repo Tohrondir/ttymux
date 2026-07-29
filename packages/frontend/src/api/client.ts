@@ -152,6 +152,8 @@ export interface ConsoleSocketHandlers {
   onMessage: (message: ConsoleServerMessage) => void;
   onConnectionChange?: (connected: boolean) => void;
   displayName?: string;
+  /** Skip auto-claiming write control as the first viewer; the client can still request it later. */
+  lurker?: boolean;
 }
 
 export interface ConsoleSocketHandle {
@@ -187,6 +189,7 @@ export function connectConsoleSocket(portId: string, clientId: string, handlers:
   function connect() {
     const params: Record<string, string> = { clientId };
     if (handlers.displayName) params.name = handlers.displayName;
+    if (handlers.lurker) params.lurker = 'true';
     socket = new WebSocket(buildWsUrl(`/ws/console/${encodeURIComponent(portId)}`, params));
     socket.onopen = () => {
       attempt = 0;
