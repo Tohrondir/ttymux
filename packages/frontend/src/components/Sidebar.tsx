@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { PortInfo } from '@ttymux/shared';
 import { usePorts } from '../hooks/usePorts.js';
 import { navigate } from '../hooks/useRoute.js';
+import { useSidebarLayout } from '../hooks/useSidebarLayout.js';
 import { groupPorts } from '../utils/groupPorts.js';
 import { SidebarPortItem } from './SidebarPortItem.js';
 import { TokenPrompt } from './TokenPrompt.js';
@@ -14,8 +15,11 @@ export interface SidebarProps {
   onToggleSession: (id: string) => void;
 }
 
+const RAIL_WIDTH = 40;
+
 export function Sidebar({ selectedPortId, gridActive, sessionPortIds, isInSession, onToggleSession }: SidebarProps) {
   const { ports, loading, error, authRequired, refresh } = usePorts();
+  const { width, isResizing, collapsed, toggleCollapsed, startResize } = useSidebarLayout();
 
   const okPorts = useMemo(() => ports.filter((p) => p.status !== 'error'), [ports]);
   const errorPorts = useMemo(
@@ -24,17 +28,44 @@ export function Sidebar({ selectedPortId, gridActive, sessionPortIds, isInSessio
   );
   const grouped = useMemo(() => groupPorts(okPorts), [okPorts]);
 
+  if (collapsed) {
+    return (
+      <aside style={{ width: RAIL_WIDTH }} className="flex shrink-0 flex-col items-center border-r border-line bg-panel py-3">
+        <button
+          type="button"
+          onClick={toggleCollapsed}
+          aria-label="Expand sidebar"
+          title="Expand sidebar"
+          className="text-fog transition-colors hover:text-paper"
+        >
+          &#9656;
+        </button>
+      </aside>
+    );
+  }
+
   return (
-    <aside className="flex w-72 shrink-0 flex-col border-r border-line bg-panel">
-      <button
-        type="button"
-        onClick={() => navigate('/')}
-        title="Back to no active session"
-        className="border-b border-line px-4 py-3 text-left transition-colors hover:bg-panel-raised"
-      >
-        <h1 className="font-mono text-sm font-semibold tracking-tight text-paper">ttymux</h1>
-        <p className="text-xs text-fog">Serial consoles on this host</p>
-      </button>
+    <aside style={{ width }} className="relative flex shrink-0 flex-col border-r border-line bg-panel">
+      <div className="flex items-stretch border-b border-line">
+        <button
+          type="button"
+          onClick={() => navigate('/')}
+          title="Back to no active session"
+          className="min-w-0 flex-1 px-4 py-3 text-left transition-colors hover:bg-panel-raised"
+        >
+          <h1 className="truncate font-mono text-sm font-semibold tracking-tight text-paper">ttymux</h1>
+          <p className="truncate text-xs text-fog">Serial consoles on this host</p>
+        </button>
+        <button
+          type="button"
+          onClick={toggleCollapsed}
+          aria-label="Collapse sidebar"
+          title="Collapse sidebar"
+          className="shrink-0 px-2 text-fog transition-colors hover:bg-panel-raised hover:text-paper"
+        >
+          &#9666;
+        </button>
+      </div>
 
       <button
         type="button"
@@ -95,6 +126,14 @@ export function Sidebar({ selectedPortId, gridActive, sessionPortIds, isInSessio
           </details>
         )}
       </div>
+
+      <div
+        onMouseDown={startResize}
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Resize sidebar"
+        className={`absolute inset-y-0 -right-1 w-2 cursor-col-resize ${isResizing ? 'bg-signal/40' : 'hover:bg-signal-dim/40'}`}
+      />
     </aside>
   );
 }
