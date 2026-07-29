@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { DEFAULT_SERIAL_SETTINGS } from '@ttymux/shared';
+import { api } from '../api/client.js';
 import { useConsoleSocket } from '../hooks/useConsoleSocket.js';
 import { SettingsPanel } from './SettingsPanel.js';
 import { StatusDot } from './StatusDot.js';
@@ -17,6 +18,16 @@ export function ConsolePane({ portId, highlightEnabled, onToggleHighlight }: Con
   const terminalRef = useRef<TerminalHandle | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+
+  async function downloadLog() {
+    setDownloadError(null);
+    try {
+      await api.downloadLog(portId);
+    } catch (err) {
+      setDownloadError(err instanceof Error ? err.message : String(err));
+    }
+  }
 
   const {
     connected,
@@ -80,6 +91,15 @@ export function ConsolePane({ portId, highlightEnabled, onToggleHighlight }: Con
           >
             Find
           </button>
+          <button
+            type="button"
+            onClick={downloadLog}
+            title="Download this port's captured log"
+            className="rounded-md border border-line px-2 py-1 text-fog transition-colors hover:border-signal-dim hover:text-paper"
+          >
+            Download log
+          </button>
+          {downloadError && <span className="text-status-error">{downloadError}</span>}
           <button
             type="button"
             onClick={() => onToggleHighlight(!highlightEnabled)}

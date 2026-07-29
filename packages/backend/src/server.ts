@@ -49,6 +49,7 @@ export async function startServer(config: ResolvedConfig): Promise<ServerHandle>
     authMode: config.auth.mode,
     portOverrides,
     broadcaster,
+    logWriter,
   };
 
   registry.on('added', (descriptor) => {

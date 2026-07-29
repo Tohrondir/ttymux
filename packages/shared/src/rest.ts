@@ -8,6 +8,7 @@ import type { PortInfo } from './ports.js';
  *
  *   GET   /api/ports        -> GetPortsResponse
  *   GET   /api/ports/:id    -> GetPortResponse
+ *   GET   /api/ports/:id/log -> raw log file download (Content-Disposition: attachment)
  *   PATCH /api/ports/:id    <- UpdatePortRequest -> GetPortResponse
  *   GET   /api/server-info  -> GetServerInfoResponse
  *   GET   /api/health       -> { ok: true }

@@ -64,6 +64,30 @@ export const api = {
   async getServerInfo(): Promise<GetServerInfoResponse> {
     return apiFetch<GetServerInfoResponse>('/api/server-info');
   },
+  /** Triggers a browser download of this port's captured log; throws if none is available yet. */
+  async downloadLog(id: string): Promise<void> {
+    const headers: Record<string, string> = {};
+    if (authToken) headers.Authorization = `Bearer ${authToken}`;
+
+    const response = await fetch(`/api/ports/${encodeURIComponent(id)}/log`, { headers });
+    if (response.status === 401) throw new AuthRequiredError();
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as ApiErrorResponse | null;
+      throw new Error(body?.message ?? `Request failed with status ${response.status}`);
+    }
+
+    const blob = await response.blob();
+    const filename = response.headers.get('Content-Disposition')?.match(/filename="([^"]+)"/)?.[1] ?? `${id}.log`;
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  },
 };
 
 function buildWsUrl(path: string, extraParams: Record<string, string> = {}): string {

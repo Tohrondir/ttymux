@@ -47,6 +47,29 @@ export function registerRestRoutes(fastify: FastifyInstance, deps: TransportDeps
     return body;
   });
 
+  fastify.get<{ Params: { id: string } }>('/api/ports/:id/log', async (request, reply) => {
+    const { id } = request.params;
+    if (!deps.serialManager.getDescriptor(id)) {
+      const body: ApiErrorResponse = { error: 'not_found', message: `Unknown port id: ${id}` };
+      await reply.code(404).send(body);
+      return;
+    }
+
+    const result = deps.logWriter.createLogReadStream(id);
+    if (!result) {
+      const body: ApiErrorResponse = {
+        error: 'not_found',
+        message: 'No log file available for this port yet (logging may be disabled, or nothing has been captured).',
+      };
+      await reply.code(404).send(body);
+      return;
+    }
+
+    reply.header('Content-Disposition', `attachment; filename="${result.filename}"`);
+    reply.type('application/octet-stream');
+    return reply.send(result.stream);
+  });
+
   fastify.patch<{ Params: { id: string }; Body: UpdatePortRequest }>('/api/ports/:id', async (request, reply) => {
     const { id } = request.params;
 

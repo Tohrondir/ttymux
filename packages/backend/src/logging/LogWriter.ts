@@ -1,5 +1,6 @@
-import { createWriteStream, existsSync, mkdirSync, renameSync, statSync, unlinkSync, type WriteStream } from 'node:fs';
+import { createReadStream, createWriteStream, existsSync, mkdirSync, renameSync, statSync, unlinkSync, type WriteStream } from 'node:fs';
 import { join } from 'node:path';
+import { Readable } from 'node:stream';
 import type { PortId } from '@ttymux/shared';
 
 export interface LogWriterOptions {
@@ -49,9 +50,39 @@ export class LogWriter {
     for (const portId of [...this.entries.keys()]) this.close(portId);
   }
 
+  getLogFileName(portId: PortId): string {
+    return `${sanitizeFileName(portId)}.log`;
+  }
+
+  /** All log files for this port that currently exist on disk, oldest rotation first, current file last. */
+  listExistingLogFiles(portId: PortId): string[] {
+    const basePath = join(this.opts.directory, this.getLogFileName(portId));
+    const paths: string[] = [];
+    for (let i = this.opts.maxFiles; i >= 1; i--) {
+      const rotated = `${basePath}.${i}`;
+      if (existsSync(rotated)) paths.push(rotated);
+    }
+    if (existsSync(basePath)) paths.push(basePath);
+    return paths;
+  }
+
+  /** A single stream over all of this port's available log history (oldest first), or undefined if nothing's been captured yet. */
+  createLogReadStream(portId: PortId): { stream: Readable; filename: string } | undefined {
+    const files = this.listExistingLogFiles(portId);
+    if (files.length === 0) return undefined;
+
+    async function* readAll() {
+      for (const filePath of files) {
+        for await (const chunk of createReadStream(filePath)) yield chunk;
+      }
+    }
+
+    return { stream: Readable.from(readAll()), filename: this.getLogFileName(portId) };
+  }
+
   private openEntry(portId: PortId): LogEntry {
     mkdirSync(this.opts.directory, { recursive: true });
-    const filePath = join(this.opts.directory, `${sanitizeFileName(portId)}.log`);
+    const filePath = join(this.opts.directory, this.getLogFileName(portId));
     const size = existsSync(filePath) ? statSync(filePath).size : 0;
     const entry: LogEntry = { stream: createWriteStream(filePath, { flags: 'a' }), size, filePath };
     this.entries.set(portId, entry);
