@@ -35,7 +35,7 @@ export function WriterBanner({ writeToken, isWriter, deniedReason, onRequestCont
           onChange={(event) => onToggleFreeForAll(event.target.checked)}
           className="accent-signal"
         />
-        FFA
+        Free-for-all
       </label>
 
       {!writeToken.freeForAll && !isWriter && (
