@@ -53,6 +53,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     if (!container) return;
 
     const term = new XtermTerminal({
+      allowProposedApi: true, // addon-search relies on the proposed registerDecoration/registerMarker APIs
       convertEol: true,
       fontFamily: 'ui-monospace, "JetBrains Mono", "SF Mono", "Cascadia Code", Consolas, monospace',
       fontSize: 13,

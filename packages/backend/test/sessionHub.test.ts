@@ -45,6 +45,17 @@ describe('SessionHub write-token arbitration', () => {
     expect(hub.canWrite('p1', 'b')).toBe(false);
   });
 
+  it('a non-lurker auto-claims control when joining a console only lurkers have watched so far', () => {
+    const hub = new SessionHub();
+    hub.attach('p1', makeClient('a'), { lurker: true });
+    hub.attach('p1', makeClient('b'), { lurker: true });
+    hub.attach('p1', makeClient('c'));
+
+    expect(hub.getWriteTokenState('p1').holder).toBe('c');
+    expect(hub.canWrite('p1', 'c')).toBe(true);
+    expect(hub.canWrite('p1', 'a')).toBe(false);
+  });
+
   it('does not auto-grant a holder when free-for-all is already on', () => {
     const hub = new SessionHub();
     hub.setFreeForAll('p1', true);

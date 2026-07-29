@@ -32,13 +32,15 @@ export class SessionHub extends EventEmitter {
 
   attach(portId: PortId, client: ClientHandle, options: { lurker?: boolean } = {}): void {
     const state = this.getOrCreate(portId);
-    const isFirstViewer = state.viewers.size === 0;
     state.viewers.set(client.clientId, { client, connectedAt: new Date().toISOString() });
 
-    // The first person to open an unclaimed console gets control automatically,
-    // no point making a lone viewer click "take control" on their own console.
-    // A lurker opts out of exactly this: they can still request control later.
-    if (isFirstViewer && state.writeToken.holder === null && !state.writeToken.freeForAll && !options.lurker) {
+    // Whoever joins an unclaimed console gets control automatically, no point
+    // making a lone viewer click "take control" on their own console. This
+    // keys off the token being unclaimed, not off viewer count: lurkers may
+    // already be watching (they deliberately skip this), so the console can
+    // still be unclaimed even when this isn't literally the first viewer.
+    // A lurker opts out of claiming it themselves, but can still request it later.
+    if (state.writeToken.holder === null && !state.writeToken.freeForAll && !options.lurker) {
       state.writeToken.holder = client.clientId;
       state.writeToken.holderName = client.displayName;
       state.writeToken.since = new Date().toISOString();
