@@ -81,6 +81,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     highlighterRef.current = new LineHighlighter((text) => termRef.current?.write(text));
 
     return () => {
+      highlighterRef.current?.flush();
       highlighterRef.current = null;
       searchAddonRef.current = null;
       dataDisposable.dispose();
@@ -93,6 +94,10 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
   useEffect(() => {
     if (termRef.current) termRef.current.options.disableStdin = readOnly;
   }, [readOnly]);
+
+  useEffect(() => {
+    if (!highlightEnabled) highlighterRef.current?.flush();
+  }, [highlightEnabled]);
 
   useImperativeHandle(
     ref,
