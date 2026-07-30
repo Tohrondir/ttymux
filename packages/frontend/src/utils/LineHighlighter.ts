@@ -48,11 +48,28 @@ export class LineHighlighter {
       const raw = index === 0 && this.rawMode;
       this.writeRaw((raw ? segment : highlightLine(segment)) + '\n');
     });
-    if (segments.length > 0) this.rawMode = false;
+    // A completed newline resolves whatever fragment the pending timer (if
+    // any) was tracking -- clear it so a fresh one gets scheduled below for
+    // whatever's left over, rather than firing on the old fragment's clock.
+    if (segments.length > 0) {
+      this.rawMode = false;
+      this.clearFlushTimer();
+    }
 
     this.carry = trailing;
-    if (this.carry.length > MAX_UNTERMINATED_BYTES) this.flush();
-    else this.rescheduleFlush();
+    if (this.carry.length > MAX_UNTERMINATED_BYTES) {
+      this.flush();
+    } else if (this.carry && !this.flushTimer) {
+      // Schedule exactly once per fragment, on its first chunk -- do NOT
+      // reset this on every subsequent push() for the same still-open
+      // fragment. A continuously-arriving partial (e.g. a held-down key's
+      // OS-level repeat, echoed back character by character every 20-40ms)
+      // would otherwise keep pushing this deadline out forever, so nothing
+      // would ever reach the screen until the key is released. Scheduling
+      // once, from the fragment's first byte, caps worst-case latency at
+      // the delay itself no matter how long new chunks keep arriving.
+      this.flushTimer = setTimeout(() => this.flush(), PARTIAL_LINE_FLUSH_DELAY_MS);
+    }
   }
 
   /** Drop all buffered state, e.g. before replaying scrollback after a reconnect. */
@@ -71,12 +88,6 @@ export class LineHighlighter {
       this.carry = '';
       this.rawMode = true;
     }
-  }
-
-  private rescheduleFlush(): void {
-    this.clearFlushTimer();
-    if (!this.carry) return;
-    this.flushTimer = setTimeout(() => this.flush(), PARTIAL_LINE_FLUSH_DELAY_MS);
   }
 
   private clearFlushTimer(): void {

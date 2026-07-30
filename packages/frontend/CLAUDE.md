@@ -106,10 +106,11 @@ newline-terminated, and holds the still-open trailing remainder (`carry`) to
 give it a chance to complete before giving up and writing it raw
 (uncolored).
 
-**This exact file was "fixed" three times in a row, each fix creating or
-missing a different failure mode, before the real root cause was properly
-diagnosed. Read this whole section before changing the timing/buffering
-logic here again — it will save you from repeating the same mistakes:**
+**This exact file was "fixed" four times in a row, each fix creating or
+missing a different failure mode, before the design actually converged on
+something correct. Read this whole section before changing the
+timing/buffering logic here again — it will save you from repeating the
+same mistakes:**
 
 1. **Original design** (60ms give-up timeout, cross-chunk buffering via
    `carry`): correct, but the 60ms wait was perceptible/felt "sluggish" when
@@ -141,7 +142,7 @@ logic here again — it will save you from repeating the same mistakes:**
    feel snappier" was going for. This also shipped and was reported by the
    user with a screenshot showing systematically-missing highlighting on a
    real, busy log stream.
-4. **Actual fix, after properly diagnosing instead of guessing again**:
+4. **Third fix, after properly diagnosing instead of guessing again**:
    before touching the timeout value a third time, first *ruled out* the
    other plausible explanation — that the device's own logger was already
    emitting ANSI codes (which `highlightLine` deliberately defers to,
@@ -160,30 +161,60 @@ logic here again — it will save you from repeating the same mistakes:**
    (8192): if `carry` grows past that with no newline in sight regardless of
    timing, flush it immediately, so a genuinely non-line-oriented stream
    (binary data, or an interactive session sitting with no `\n` for a long
-   time) can't make memory grow unbounded. This is the current, believed-
-   correct design.
+   time) can't make memory grow unbounded. This fixed the missing-
+   highlighting-under-load bug — but introduced a new, more severe one,
+   because of *how* the timeout was implemented, not the value itself.
+5. **Fourth fix — the actual root architectural bug**: every version above
+   (60ms, 16ms, 200ms) shared the same flaw: `rescheduleFlush()` cleared and
+   restarted the give-up timer **on every single incoming chunk**. That's
+   fine as long as chunks eventually stop arriving — but holding down a key
+   triggers OS-level key-repeat, which echoes back several chunks (often
+   every 20-40ms, character by character); as long as the next chunk always
+   arrives before the timer would fire, the timer *never fires at all*.
+   Practically: hold a key, see nothing on screen the whole time you hold
+   it, then the instant you release, everything accumulated appears at
+   once. This is a fundamental property of "reset the deadline on every new
+   chunk" and would have happened at 16ms or 60ms too, just with smaller,
+   less obviously-broken batches — it isn't something a different timeout
+   number could have fixed. The real fix: schedule the flush timer **once**,
+   on a fragment's *first* chunk, and never reset it while more chunks keep
+   arriving for that same still-open fragment — only clear it when the
+   fragment actually resolves (a newline completes it, or the size cap
+   forces an immediate flush). This bounds worst-case latency to the
+   timeout itself regardless of how long new chunks keep coming, so a held
+   key now produces periodic batched writes roughly every 200ms instead of
+   one dump on release, while every previous multi-chunk reassembly test
+   case still passes unchanged (verified: a single held key for 600ms with
+   25ms-interval echoes produces the first write within ~220ms and several
+   batches total, not one write after release; all three prior split-line
+   gap tests at 5/60/190ms still highlight correctly).
 
-**The lesson, if you're changing this file again**: a fixed wall-clock
-timeout is fundamentally in tension between two needs — reassembling a
-log line that's split across chunks (wants a long, forgiving wait) and
-showing typed/interactive character-echo promptly (wants a short wait,
-since that has no newline until Enter is pressed at all). This codebase
-currently resolves that tension by favoring correctness (long timeout) on
-the theory that this product's primary use case is passively watching
-structured log output, not interactive typing, and that a modest,
-imperceptible-most-of-the-time delay before a line "settles" into color is
-far less bad than a line that silently never colors at all. If you want to
-revisit that trade-off, **write a reproduction first** (either a real
-multi-chunk example from an actual affected user, or a synthetic
-`npx tsx` script simulating the gap sizes you're worried about) rather than
-adjusting the number and hoping. A pure Node script exercising the class
-directly (no `Terminal`/React/xterm involved) is the fastest, least
-confounded way to verify any change here — see the isolated-test pattern
-described in root `CLAUDE.md`'s "Test coverage," and specifically avoid
-testing timing-sensitive async behavior through a React `<StrictMode>` tree
-(it deliberately double-invokes effects in dev mode, which will make an
-async multi-step test harness produce misleading duplicate-write artifacts
-that look like real bugs but aren't).
+**The lesson, if you're changing this file again**: a "give up after N ms of
+buffering" timeout and a "give up N ms after this fragment *started*"
+timeout sound almost the same but behave completely differently under
+continuously-arriving partial data — only the second one has a bounded
+worst case. Any future change to this file should preserve the
+schedule-once-per-fragment property, not just re-tune the delay constant.
+Separately: there's also a real, inherent tension between reassembling a
+log line split across chunks (wants a long, forgiving wait) and showing
+typed/interactive character-echo promptly (wants a short wait, since that
+has no newline until Enter is pressed at all) — this codebase currently
+resolves that by favoring correctness/a longer timeout, on the theory that
+watching structured log output is the primary use case here, not
+interactive typing, and that periodic ~200ms-batched echo while holding a
+key is an acceptable trade against a log line silently never getting
+colored. If you want to revisit that trade-off, **write a reproduction
+first** — a real multi-chunk example from an affected user, or a synthetic
+`npx tsx` script simulating both the gap sizes and the continuously-
+arriving-chunks case (not just a single gap) — rather than adjusting a
+number and hoping. A pure Node script exercising the class directly (no
+`Terminal`/React/xterm involved) is the fastest, least confounded way to
+verify any change here — see the isolated-test pattern described in root
+`CLAUDE.md`'s "Test coverage," and specifically avoid testing
+timing-sensitive async behavior through a React `<StrictMode>` tree (it
+deliberately double-invokes effects in dev mode, which will make an async
+multi-step test harness produce misleading duplicate-write artifacts that
+look like real bugs but aren't).
 
 ## `ConsolePane` vs `GridPane`
 
