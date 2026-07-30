@@ -34,12 +34,14 @@ where a serial console is still the only way in.
   output, without touching the underlying bytes. Toggle per browser from the
   console header. Devices that already send their own ANSI colors are left
   alone entirely.
-- **Search scrollback**: Ctrl+F (or the Find button) opens an in-terminal
-  search with next/previous and a match count, without triggering the
-  browser's own find bar.
+- **Search scrollback**: Ctrl+F opens an in-terminal search with
+  next/previous and a match count, without triggering the browser's own
+  find bar.
 - **Disk logging with rotation**, per port, path configurable, downloadable
   straight from the console header (concatenates any rotated history into
-  one file).
+  one file). The on-screen scrollback is also reseeded from this history on
+  startup, so reopening a console after a restart shows recent output right
+  away instead of starting blank.
 - **Lurker mode**: a per-browser toggle in the sidebar for using ttymux as a
   passive display, watching without automatically taking control of whatever
   you open next. You can still click "Take control" manually at any time.

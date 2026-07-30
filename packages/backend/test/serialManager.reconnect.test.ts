@@ -109,4 +109,32 @@ describe('SerialManager reconnect/backoff', () => {
     sm.handlePortRemoved('test-port');
     expect(sm.write('test-port', Buffer.from('nope'))).toBe(false);
   });
+
+  it('seeds scrollback from disk the first time a port is seen, ahead of any live data', () => {
+    const mock = createMockPortFactory();
+    const sm = new SerialManager({
+      portFactory: mock.factory,
+      backoffOptions: BACKOFF,
+      scrollbackBytes: 1024,
+      scrollbackSeed: (portId) => (portId === 'test-port' ? Buffer.from('from disk\n') : undefined),
+    });
+
+    sm.handlePortAdded(descriptor());
+    expect(sm.getScrollback('test-port').toString()).toBe('from disk\n');
+
+    mock.created[0].emit('data', Buffer.from('live data\n'));
+    expect(sm.getScrollback('test-port').toString()).toBe('from disk\nlive data\n');
+  });
+
+  it('does not re-seed scrollback on a reconnect of an already-known port', () => {
+    const mock = createMockPortFactory();
+    const seed = vi.fn(() => Buffer.from('from disk\n'));
+    const sm = new SerialManager({ portFactory: mock.factory, backoffOptions: BACKOFF, scrollbackSeed: seed });
+
+    sm.handlePortAdded(descriptor());
+    sm.handlePortRemoved('test-port');
+    sm.handlePortAdded(descriptor());
+
+    expect(seed).toHaveBeenCalledTimes(1);
+  });
 });

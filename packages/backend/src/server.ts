@@ -32,12 +32,16 @@ export async function startServer(config: ResolvedConfig): Promise<ServerHandle>
   await fastify.register(fastifyWebsocket);
 
   const registry = new PortRegistry(2000, () => listRawPorts({ includeLegacyPorts: config.discovery.includeLegacyPorts }));
+  const logWriter = new LogWriter(config.logging);
   const serialManager = new SerialManager({
     scrollbackBytes: config.scrollback.bytes,
     defaultSettings: (portId) => ({ ...DEFAULT_SERIAL_SETTINGS, ...config.ports[portId]?.defaultSettings }),
+    // Rehydrate scrollback from disk on startup, so reopening a console after a
+    // restart shows recent history immediately instead of an empty screen --
+    // the full log is never actually lost, just not shown until new data arrives.
+    scrollbackSeed: (portId) => logWriter.readTail(portId, config.scrollback.bytes),
   });
   const sessionHub = new SessionHub();
-  const logWriter = new LogWriter(config.logging);
   const authProvider = createAuthProvider(config.auth);
   const broadcaster = new EventsBroadcaster();
   const portOverrides = new PortOverridesStore(config.ports, resolve(config.persistence.directory, 'port-overrides.json'));

@@ -1,4 +1,16 @@
-import { createReadStream, createWriteStream, existsSync, mkdirSync, renameSync, statSync, unlinkSync, type WriteStream } from 'node:fs';
+import {
+  closeSync,
+  createReadStream,
+  createWriteStream,
+  existsSync,
+  mkdirSync,
+  openSync,
+  readSync,
+  renameSync,
+  statSync,
+  unlinkSync,
+  type WriteStream,
+} from 'node:fs';
 import { join } from 'node:path';
 import { Readable } from 'node:stream';
 import type { PortId } from '@ttymux/shared';
@@ -78,6 +90,39 @@ export class LogWriter {
     }
 
     return { stream: Readable.from(readAll()), filename: this.getLogFileName(portId) };
+  }
+
+  /**
+   * The most recent `maxBytes` of this port's on-disk history (across
+   * rotated files if the current one alone isn't enough), oldest first --
+   * for seeding a freshly created in-memory scrollback buffer after a
+   * restart, without reading whole (potentially many-MB) log files into memory.
+   */
+  readTail(portId: PortId, maxBytes: number): Buffer {
+    if (maxBytes <= 0) return Buffer.alloc(0);
+
+    const files = this.listExistingLogFiles(portId);
+    const chunks: Buffer[] = [];
+    let remaining = maxBytes;
+
+    for (let i = files.length - 1; i >= 0 && remaining > 0; i--) {
+      const filePath = files[i];
+      const size = statSync(filePath).size;
+      const readSize = Math.min(size, remaining);
+      if (readSize <= 0) continue;
+
+      const fd = openSync(filePath, 'r');
+      try {
+        const chunk = Buffer.alloc(readSize);
+        readSync(fd, chunk, 0, readSize, size - readSize);
+        chunks.unshift(chunk);
+      } finally {
+        closeSync(fd);
+      }
+      remaining -= readSize;
+    }
+
+    return Buffer.concat(chunks);
   }
 
   private openEntry(portId: PortId): LogEntry {

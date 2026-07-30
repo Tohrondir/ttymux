@@ -24,6 +24,8 @@ export interface SerialManagerOptions {
   portFactory?: SerialPortFactory;
   backoffOptions?: BackoffOptions;
   defaultSettings?: (portId: PortId) => SerialSettings;
+  /** Called once per port the first time it's seen, to prime scrollback with recent history from disk (e.g. after a restart). */
+  scrollbackSeed?: (portId: PortId) => Buffer | undefined;
 }
 
 export interface SerialManager {
@@ -43,6 +45,7 @@ export class SerialManager extends EventEmitter {
   private readonly portFactory: SerialPortFactory;
   private readonly backoffOptions: BackoffOptions;
   private readonly defaultSettingsFor: (portId: PortId) => SerialSettings;
+  private readonly scrollbackSeed?: (portId: PortId) => Buffer | undefined;
 
   constructor(opts: SerialManagerOptions = {}) {
     super();
@@ -50,6 +53,7 @@ export class SerialManager extends EventEmitter {
     this.portFactory = opts.portFactory ?? createRealSerialPort;
     this.backoffOptions = opts.backoffOptions ?? DEFAULT_BACKOFF_OPTIONS;
     this.defaultSettingsFor = opts.defaultSettings ?? (() => DEFAULT_SERIAL_SETTINGS);
+    this.scrollbackSeed = opts.scrollbackSeed;
   }
 
   handlePortAdded(descriptor: PortDescriptor): void {
@@ -64,6 +68,8 @@ export class SerialManager extends EventEmitter {
         present: true,
       };
       this.ports.set(descriptor.id, managed);
+      const seed = this.scrollbackSeed?.(descriptor.id);
+      if (seed && seed.length > 0) managed.ringBuffer.append(seed);
     } else {
       managed.descriptor = descriptor;
       managed.present = true;
