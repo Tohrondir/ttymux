@@ -1,25 +1,34 @@
 import { highlightLine } from './highlightLine.js';
 
-// A serial device's 'data' event very often fires more than once per
-// logical line -- e.g. one write() call from the device can arrive as two or
-// three chunks a few hundred microseconds apart. Without buffering across
-// calls, a line split like that would never see its own newline in the same
-// push() call and would silently skip highlighting forever. This is *not*
-// about waiting for a slow typist to pause; it's a short window for a line's
-// own tail to catch up before giving up on it -- short enough to be
-// imperceptible, long enough to reassemble same-line chunks that land back
-// to back.
-const PARTIAL_LINE_FLUSH_DELAY_MS = 16;
+// A device's 'data' event isn't guaranteed to deliver one logical line as a
+// single chunk -- one write() on the far end can arrive as several separate
+// chunks, and the gap between them grows under load (device-side buffering,
+// OS scheduling, or the browser's own event loop being busy with a burst of
+// incoming messages). A short give-up window actively works against
+// correctness here: the busier the output, the more likely some line's tail
+// arrives just late enough to miss it, and that line permanently loses its
+// highlighting. This waits generously before giving up and showing a
+// still-open line raw, so reassembly comfortably survives realistic jitter;
+// watching output that occasionally takes an extra beat to color is far less
+// noticeable than output that never colors at all.
+const PARTIAL_LINE_FLUSH_DELAY_MS = 200;
+
+// Separate, non-time-based safety valve: a stream that's genuinely not
+// line-oriented (e.g. raw/binary data, or an interactive session with no
+// newline for a while) shouldn't make `carry` grow without bound just
+// because nothing has hit the time-based flush yet.
+const MAX_UNTERMINATED_BYTES = 8192;
 
 /**
  * Feeds raw terminal output through line-based highlighting without ever
  * delaying output that's already newline-terminated -- the common case for
  * log-style lines gets colored with zero added latency. A line still being
- * streamed (no trailing newline yet, e.g. a shell prompt waiting for input)
- * is written raw once it's been buffered longer than the flush delay, so
- * real-time character echo never visibly lags; that particular line just
- * doesn't get colorized, since by the time its newline arrives part of it
- * is already on screen.
+ * streamed (no trailing newline yet, e.g. a shell prompt waiting for input,
+ * or a line arriving in several chunks) is written raw once it's been
+ * buffered longer than the flush delay, or has grown past a sane single-line
+ * size, so real-time character echo never visibly lags forever; that
+ * particular line just doesn't get colorized, since by the time its newline
+ * arrives part of it is already on screen.
  */
 export class LineHighlighter {
   private decoder = new TextDecoder();
@@ -42,7 +51,8 @@ export class LineHighlighter {
     if (segments.length > 0) this.rawMode = false;
 
     this.carry = trailing;
-    this.rescheduleFlush();
+    if (this.carry.length > MAX_UNTERMINATED_BYTES) this.flush();
+    else this.rescheduleFlush();
   }
 
   /** Drop all buffered state, e.g. before replaying scrollback after a reconnect. */
