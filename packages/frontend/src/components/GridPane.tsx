@@ -59,15 +59,6 @@ export function GridPane({ portId, onRemove, highlightEnabled, lurkerMode }: Gri
           />
           <button
             type="button"
-            onClick={() => setSearchOpen((open) => !open)}
-            aria-pressed={searchOpen}
-            title="Find in scrollback (Ctrl+F)"
-            className={searchOpen ? 'text-paper' : 'text-fog hover:text-paper'}
-          >
-            Find
-          </button>
-          <button
-            type="button"
             onClick={() => onRemove(portId)}
             aria-label="Remove from grid view"
             title="Remove from grid view"

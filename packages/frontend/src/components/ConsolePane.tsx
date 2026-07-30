@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useRef, useState } from 'react';
 import { DEFAULT_SERIAL_SETTINGS } from '@ttymux/shared';
 import { api } from '../api/client.js';
 import { useConsoleSocket } from '../hooks/useConsoleSocket.js';
@@ -66,12 +66,16 @@ export function ConsolePane({ portId, highlightEnabled, onToggleHighlight, lurke
           <h1 className="truncate text-sm font-medium text-paper">{port?.friendlyName ?? port?.path ?? portId}</h1>
           <p className="truncate font-mono text-xs text-fog">{portId}</p>
         </div>
-        <div className="flex flex-wrap shrink-0 items-center justify-end gap-3 text-xs text-fog">
-          {port && <StatusDot status={port.status} hasWriter={port.writer !== null} />}
-          <span title={viewers.map((v) => v.displayName ?? 'Anonymous').join(', ')}>
-            {viewers.length} {viewers.length === 1 ? 'viewer' : 'viewers'}
-          </span>
-          {!connected && <span className="text-status-error">Reconnecting&hellip;</span>}
+        <div className="flex flex-wrap shrink-0 items-center justify-end gap-x-4 gap-y-2 text-xs text-fog">
+          <div className="flex shrink-0 items-center gap-3">
+            {port && <StatusDot status={port.status} hasWriter={port.writer !== null} />}
+            <span title={viewers.map((v) => v.displayName ?? 'Anonymous').join(', ')}>
+              {viewers.length} {viewers.length === 1 ? 'viewer' : 'viewers'}
+            </span>
+            {!connected && <span className="text-status-error">Reconnecting&hellip;</span>}
+          </div>
+
+          <span className="h-4 w-px bg-line" aria-hidden="true" />
 
           <WriterBanner
             writeToken={writeToken}
@@ -81,48 +85,42 @@ export function ConsolePane({ portId, highlightEnabled, onToggleHighlight, lurke
             onToggleFreeForAll={setFreeForAll}
           />
 
-          <button
-            type="button"
-            onClick={() => setSearchOpen((open) => !open)}
-            aria-pressed={searchOpen}
-            title="Find in scrollback (Ctrl+F)"
-            className={`rounded-md border px-2 py-1 transition-colors ${
-              searchOpen ? 'border-signal-dim text-paper' : 'border-line text-fog hover:border-signal-dim hover:text-paper'
-            }`}
-          >
-            Find
-          </button>
-          <button
-            type="button"
-            onClick={downloadLog}
-            title="Download this port's captured log"
-            className="rounded-md border border-line px-2 py-1 text-fog transition-colors hover:border-signal-dim hover:text-paper"
-          >
-            Download log
-          </button>
-          {downloadError && <span className="text-status-error">{downloadError}</span>}
-          <button
-            type="button"
-            onClick={() => onToggleHighlight(!highlightEnabled)}
-            aria-pressed={highlightEnabled}
-            title="Color log levels, timestamps, IPs, and other common patterns in plain-text output"
-            className={`rounded-md border px-2 py-1 transition-colors ${
-              highlightEnabled ? 'border-signal-dim text-signal' : 'border-line text-fog hover:border-signal-dim hover:text-paper'
-            }`}
-          >
-            Highlight
-          </button>
-          <button
-            type="button"
-            onClick={() => setSettingsOpen((open) => !open)}
-            aria-label="Connection settings"
-            aria-pressed={settingsOpen}
-            className={`inline-flex items-center justify-center rounded-md border px-2 py-1 transition-colors ${
-              settingsOpen ? 'border-signal-dim text-paper' : 'border-line text-fog hover:border-signal-dim hover:text-paper'
-            }`}
-          >
-            &#9881;
-          </button>
+          <span className="h-4 w-px bg-line" aria-hidden="true" />
+
+          <div className="flex shrink-0 items-center gap-2">
+            {downloadError && <span className="text-status-error">{downloadError}</span>}
+            <button
+              type="button"
+              onClick={downloadLog}
+              title="Download this port's captured log"
+              className="rounded-md border border-line px-2 py-1 text-fog transition-colors hover:border-signal-dim hover:text-paper"
+            >
+              Download log
+            </button>
+            <button
+              type="button"
+              onClick={() => onToggleHighlight(!highlightEnabled)}
+              aria-pressed={highlightEnabled}
+              title="Color log levels, timestamps, IPs, and other common patterns in plain-text output"
+              className={`rounded-md border px-2 py-1 transition-colors ${
+                highlightEnabled ? 'border-signal-dim text-signal' : 'border-line text-fog hover:border-signal-dim hover:text-paper'
+              }`}
+            >
+              Highlight
+            </button>
+            <button
+              type="button"
+              onClick={() => setSettingsOpen((open) => !open)}
+              aria-label="Connection settings"
+              aria-pressed={settingsOpen}
+              title="Connection settings"
+              className={`inline-flex items-center justify-center rounded-md border px-2 py-1 transition-colors ${
+                settingsOpen ? 'border-signal-dim text-paper' : 'border-line text-fog hover:border-signal-dim hover:text-paper'
+              }`}
+            >
+              &#9881;
+            </button>
+          </div>
         </div>
       </header>
 
