@@ -19,6 +19,17 @@ const PARTIAL_LINE_FLUSH_DELAY_MS = 200;
 // because nothing has hit the time-based flush yet.
 const MAX_UNTERMINATED_BYTES = 8192;
 
+// A generous reassembly window and instant character echo are in genuine
+// tension for the exact same code path: output the local user just typed
+// (or is holding a key to repeat) is virtually never worth highlighting and
+// should never wait, while background device output arriving on its own is
+// exactly where the reassembly window earns its keep -- and the user isn't
+// perceiving per-character latency on output they didn't just cause. This
+// window is how long "the user just sent input" stays true after the most
+// recent keystroke, so a held key (which re-fires every 20-40ms via OS
+// repeat) keeps it continuously true for as long as it's held.
+const RECENT_LOCAL_INPUT_WINDOW_MS = 500;
+
 /**
  * Feeds raw terminal output through line-based highlighting without ever
  * delaying output that's already newline-terminated -- the common case for
@@ -35,8 +46,14 @@ export class LineHighlighter {
   private carry = '';
   private rawMode = false;
   private flushTimer: ReturnType<typeof setTimeout> | undefined;
+  private lastLocalInputAt: number | undefined;
 
   constructor(private readonly writeRaw: (text: string) => void) {}
+
+  /** Call whenever the local user sends input (e.g. from `Terminal.onData`), so a reply/echo can be told apart from unprompted device output. */
+  notifyLocalInput(): void {
+    this.lastLocalInputAt = Date.now();
+  }
 
   push(data: Uint8Array): void {
     const text = this.decoder.decode(data, { stream: true });
@@ -57,7 +74,12 @@ export class LineHighlighter {
     }
 
     this.carry = trailing;
-    if (this.carry.length > MAX_UNTERMINATED_BYTES) {
+
+    const recentlyTyped = this.lastLocalInputAt !== undefined && Date.now() - this.lastLocalInputAt < RECENT_LOCAL_INPUT_WINDOW_MS;
+    if (this.carry.length > MAX_UNTERMINATED_BYTES || recentlyTyped) {
+      // Likely an echo of something the user just typed (or is still
+      // holding a key to repeat) -- show it the instant it arrives rather
+      // than waiting to see if it'll complete a highlightable word.
       this.flush();
     } else if (this.carry && !this.flushTimer) {
       // Schedule exactly once per fragment, on its first chunk -- do NOT

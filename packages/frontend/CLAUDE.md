@@ -106,7 +106,7 @@ newline-terminated, and holds the still-open trailing remainder (`carry`) to
 give it a chance to complete before giving up and writing it raw
 (uncolored).
 
-**This exact file was "fixed" four times in a row, each fix creating or
+**This exact file was "fixed" five times in a row, each fix creating or
 missing a different failure mode, before the design actually converged on
 something correct. Read this whole section before changing the
 timing/buffering logic here again — it will save you from repeating the
@@ -189,32 +189,69 @@ same mistakes:**
    batches total, not one write after release; all three prior split-line
    gap tests at 5/60/190ms still highlight correctly).
 
-**The lesson, if you're changing this file again**: a "give up after N ms of
-buffering" timeout and a "give up N ms after this fragment *started*"
-timeout sound almost the same but behave completely differently under
-continuously-arriving partial data — only the second one has a bounded
-worst case. Any future change to this file should preserve the
-schedule-once-per-fragment property, not just re-tune the delay constant.
-Separately: there's also a real, inherent tension between reassembling a
-log line split across chunks (wants a long, forgiving wait) and showing
-typed/interactive character-echo promptly (wants a short wait, since that
-has no newline until Enter is pressed at all) — this codebase currently
-resolves that by favoring correctness/a longer timeout, on the theory that
-watching structured log output is the primary use case here, not
-interactive typing, and that periodic ~200ms-batched echo while holding a
-key is an acceptable trade against a log line silently never getting
-colored. If you want to revisit that trade-off, **write a reproduction
-first** — a real multi-chunk example from an affected user, or a synthetic
-`npx tsx` script simulating both the gap sizes and the continuously-
-arriving-chunks case (not just a single gap) — rather than adjusting a
-number and hoping. A pure Node script exercising the class directly (no
-`Terminal`/React/xterm involved) is the fastest, least confounded way to
-verify any change here — see the isolated-test pattern described in root
-`CLAUDE.md`'s "Test coverage," and specifically avoid testing
-timing-sensitive async behavior through a React `<StrictMode>` tree (it
-deliberately double-invokes effects in dev mode, which will make an async
-multi-step test harness produce misleading duplicate-write artifacts that
-look like real bugs but aren't).
+6. **Fifth fix — resolving the tension instead of trading it off**: fix #5
+   still left a real, user-visible cost: even bounded, ~200ms-batched echo
+   while holding a key feels noticeably choppy/laggy compared to smooth
+   per-character echo (the user described it precisely as "blocks of 7,"
+   matching a ~25ms OS repeat rate against a 200ms window). The previous
+   version of this doc framed reassembly-correctness vs. instant-echo as an
+   inherent, un-splittable trade-off to be balanced with one timeout number.
+   That framing was wrong — there's a signal available that breaks the tie:
+   **whether this data is plausibly an echo of something the local user
+   just typed**, which `Terminal.tsx` already knows the exact moment of
+   (`term.onData`, which fires on every keystroke *and* every OS-level
+   key-repeat). Output the user just caused by typing is virtually never
+   worth highlighting and should never wait for anything; output the device
+   produces unprompted is exactly where the reassembly window matters, and
+   the user isn't perceiving per-character latency on it since they aren't
+   the one actively pressing keys at that moment. `LineHighlighter` now
+   exposes `notifyLocalInput()` (called from `Terminal.tsx`'s `term.onData`
+   handler alongside the existing `onInputRef.current(...)` call); while
+   `Date.now() - lastLocalInputAt < RECENT_LOCAL_INPUT_WINDOW_MS` (500ms —
+   long enough that continuous OS key-repeat, ~20-40ms between events, keeps
+   it continuously true for the entire duration a key is held, but short
+   enough to fully expire well before the next unrelated log line shows up),
+   `push()` flushes the trailing fragment immediately on every call, no
+   waiting at all; once that window lapses, it falls back to the
+   schedule-once-per-fragment behavior from fix #5 for reassembly. Verified:
+   a simulated held key (with `notifyLocalInput()` called alongside each
+   simulated keystroke, matching real wiring) now writes on every single
+   push with ~25ms gaps between writes, not ~200ms batches; the same
+   multi-chunk log-line splits (5/60/190ms gaps) still reassemble and
+   highlight correctly when there's been no recent local input; and the
+   window correctly re-expires 500ms after typing stops, so a log line that
+   happens to arrive shortly after you stop typing still gets the full
+   reassembly treatment rather than being permanently downgraded.
+
+**The lessons, if you're changing this file again**:
+
+- A "give up after N ms of buffering" timeout and a "give up N ms after
+  this fragment *started*" timeout sound almost the same but behave
+  completely differently under continuously-arriving partial data — only
+  the second has a bounded worst case. Preserve the
+  schedule-once-per-fragment property (fix #5), don't just re-tune the
+  delay constant.
+- Don't assume "instant echo" and "correct reassembly" are a fixed
+  trade-off that has to be balanced with a single number just because they
+  apply to the same code path — check whether there's a *different signal*
+  available (here: "did the local user just cause this") that lets you
+  give each case what it actually needs instead of splitting the
+  difference badly for both. `RECENT_LOCAL_INPUT_WINDOW_MS` is a duration
+  for a *different* thing (how long "just typed" stays true) than
+  `PARTIAL_LINE_FLUSH_DELAY_MS` (how long to wait before giving up on
+  reassembly) — don't conflate them into one knob again.
+- **Write a reproduction before changing a number or a heuristic here** —
+  a real multi-chunk example from an affected user, or a synthetic
+  `npx tsx` script simulating the actual failure mode (a single gap, a
+  continuously-arriving stream, held-key timing, whatever's in question) —
+  rather than adjusting something and hoping. A pure Node script exercising
+  the class directly (no `Terminal`/React/xterm involved) is the fastest,
+  least confounded way to verify any change here — see the isolated-test
+  pattern described in root `CLAUDE.md`'s "Test coverage," and specifically
+  avoid testing timing-sensitive async behavior through a React
+  `<StrictMode>` tree (it deliberately double-invokes effects in dev mode,
+  which will make an async multi-step test harness produce misleading
+  duplicate-write artifacts that look like real bugs but aren't).
 
 ## `ConsolePane` vs `GridPane`
 

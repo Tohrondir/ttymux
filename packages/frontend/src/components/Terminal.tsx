@@ -71,7 +71,10 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     term.open(container);
     fit.fit();
 
-    const dataDisposable = term.onData((text) => onInputRef.current(encoder.encode(text)));
+    const dataDisposable = term.onData((text) => {
+      onInputRef.current(encoder.encode(text));
+      highlighterRef.current?.notifyLocalInput();
+    });
 
     const resizeObserver = new ResizeObserver(() => fit.fit());
     resizeObserver.observe(container);
