@@ -11,6 +11,7 @@ export default function App() {
   const session = useSessionPorts();
   const [highlightEnabled, setHighlightEnabled] = useLocalStorageState('ttymux.highlightEnabled', true);
   const [lurkerMode, setLurkerMode] = useLocalStorageState('ttymux.lurkerMode', false);
+  const [noteAuthor, setNoteAuthor] = useLocalStorageState('ttymux.noteAuthor', '');
 
   return (
     <div className="flex h-screen">
@@ -31,6 +32,8 @@ export default function App() {
             highlightEnabled={highlightEnabled}
             onToggleHighlight={setHighlightEnabled}
             lurkerMode={lurkerMode}
+            noteAuthor={noteAuthor}
+            onNoteAuthorChange={setNoteAuthor}
           />
         )}
         {route.name === 'grid' && (

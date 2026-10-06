@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { PortInfo } from '@ttymux/shared';
 import { api } from '../api/client.js';
 import { navigate } from '../hooks/useRoute.js';
+import { NOTE_COLOR_META } from '../utils/noteColors.js';
 import { StatusDot } from './StatusDot.js';
 
 export interface SidebarPortItemProps {
@@ -102,6 +103,18 @@ export function SidebarPortItem({ port, selected, inSession, onToggleSession }: 
           >
             &#9998;
           </button>
+        )}
+
+        {!editing && port.notes.length > 0 && (
+          <span
+            className="flex shrink-0 items-center gap-0.5"
+            title={port.notes.map((note) => `${NOTE_COLOR_META[note.color].label}: ${note.text}`).join('\n')}
+            aria-label={`${port.notes.length} ${port.notes.length === 1 ? 'note' : 'notes'}`}
+          >
+            {[...new Set(port.notes.map((note) => note.color))].slice(0, 3).map((color) => (
+              <span key={color} className={`h-1.5 w-1.5 rounded-full ${NOTE_COLOR_META[color].dot}`} />
+            ))}
+          </span>
         )}
 
         {!editing && port.viewerCount > 0 && (

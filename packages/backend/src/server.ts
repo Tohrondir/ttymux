@@ -9,6 +9,7 @@ import { createAuthProvider } from './auth/AuthProvider.js';
 import type { ResolvedConfig } from './config/loadConfig.js';
 import { PortOverridesStore } from './config/PortOverridesStore.js';
 import { LogWriter } from './logging/LogWriter.js';
+import { PortNotesStore } from './notes/PortNotesStore.js';
 import { PortRegistry } from './registry/PortRegistry.js';
 import { listRawPorts } from './registry/discovery.js';
 import { SerialManager } from './serial/SerialManager.js';
@@ -45,6 +46,7 @@ export async function startServer(config: ResolvedConfig): Promise<ServerHandle>
   const authProvider = createAuthProvider(config.auth);
   const broadcaster = new EventsBroadcaster();
   const portOverrides = new PortOverridesStore(config.ports, resolve(config.persistence.directory, 'port-overrides.json'));
+  const portNotes = new PortNotesStore(resolve(config.persistence.directory, 'port-notes.json'));
 
   const deps = {
     serialManager,
@@ -52,13 +54,14 @@ export async function startServer(config: ResolvedConfig): Promise<ServerHandle>
     authProvider,
     authMode: config.auth.mode,
     portOverrides,
+    portNotes,
     broadcaster,
     logWriter,
   };
 
   registry.on('added', (descriptor) => {
     serialManager.handlePortAdded(descriptor);
-    const info = buildPortInfo(descriptor.id, serialManager, sessionHub, portOverrides);
+    const info = buildPortInfo(descriptor.id, serialManager, sessionHub, portOverrides, portNotes);
     if (info) broadcaster.broadcast({ type: 'portAdded', port: info });
   });
 
@@ -75,7 +78,7 @@ export async function startServer(config: ResolvedConfig): Promise<ServerHandle>
   });
 
   serialManager.on('status', (portId) => {
-    const info = buildPortInfo(portId, serialManager, sessionHub, portOverrides);
+    const info = buildPortInfo(portId, serialManager, sessionHub, portOverrides, portNotes);
     if (!info) return;
     sessionHub.broadcastStatus(portId, info);
     broadcaster.broadcast({ type: 'portStatusChanged', port: info });
@@ -84,7 +87,7 @@ export async function startServer(config: ResolvedConfig): Promise<ServerHandle>
   // Viewer count and write-token changes don't go through SerialManager, so
   // they need their own path to reach the dashboard's live view.
   sessionHub.on('changed', (portId) => {
-    const info = buildPortInfo(portId, serialManager, sessionHub, portOverrides);
+    const info = buildPortInfo(portId, serialManager, sessionHub, portOverrides, portNotes);
     if (info) broadcaster.broadcast({ type: 'portStatusChanged', port: info });
   });
 

@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { DEFAULT_SERIAL_SETTINGS } from '@ttymux/shared';
 import { api } from '../api/client.js';
 import { useConsoleSocket } from '../hooks/useConsoleSocket.js';
+import { PortNotes } from './PortNotes.js';
 import { SettingsPanel } from './SettingsPanel.js';
 import { StatusDot } from './StatusDot.js';
 import { Terminal, type TerminalHandle } from './Terminal.js';
@@ -13,12 +14,15 @@ export interface ConsolePaneProps {
   highlightEnabled: boolean;
   onToggleHighlight: (enabled: boolean) => void;
   lurkerMode: boolean;
+  noteAuthor: string;
+  onNoteAuthorChange: (author: string) => void;
 }
 
-export function ConsolePane({ portId, highlightEnabled, onToggleHighlight, lurkerMode }: ConsolePaneProps) {
+export function ConsolePane({ portId, highlightEnabled, onToggleHighlight, lurkerMode, noteAuthor, onNoteAuthorChange }: ConsolePaneProps) {
   const terminalRef = useRef<TerminalHandle | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [addingNote, setAddingNote] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
 
   async function downloadLog() {
@@ -91,6 +95,17 @@ export function ConsolePane({ portId, highlightEnabled, onToggleHighlight, lurke
             {downloadError && <span className="text-status-error">{downloadError}</span>}
             <button
               type="button"
+              onClick={() => setAddingNote((adding) => !adding)}
+              aria-pressed={addingNote}
+              title="Leave a message on this port for everyone else who opens it"
+              className={`rounded-md border px-2 py-1 transition-colors ${
+                addingNote ? 'border-signal-dim text-paper' : 'border-line text-fog hover:border-signal-dim hover:text-paper'
+              }`}
+            >
+              Add note
+            </button>
+            <button
+              type="button"
               onClick={downloadLog}
               title="Download this port's captured log"
               className="rounded-md border border-line px-2 py-1 text-fog transition-colors hover:border-signal-dim hover:text-paper"
@@ -123,6 +138,15 @@ export function ConsolePane({ portId, highlightEnabled, onToggleHighlight, lurke
           </div>
         </div>
       </header>
+
+      <PortNotes
+        portId={portId}
+        notes={port?.notes ?? []}
+        adding={addingNote}
+        onAddingChange={setAddingNote}
+        author={noteAuthor}
+        onAuthorChange={onNoteAuthorChange}
+      />
 
       <div className="relative min-h-0 flex-1 p-2">
         <Terminal ref={terminalRef} readOnly={!canType} onInput={sendInput} highlightEnabled={highlightEnabled} />

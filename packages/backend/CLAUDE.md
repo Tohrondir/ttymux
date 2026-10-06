@@ -229,6 +229,17 @@ authoritative behavioral spec — every rule below has a matching test):
   error surfaced, just silent loss of persisted overrides on the next
   write; worth hardening if this becomes a real support issue.
 
+## `src/notes/PortNotesStore.ts` — port notes
+
+- Color-coded messages users leave on a port for each other, persisted to
+  `<persistence.directory>/port-notes.json` on every change (same
+  load/save pattern as `PortOverridesStore`, same silent-reset-on-corrupt-
+  file behavior). Capped at `MAX_NOTES_PER_PORT` (oldest dropped).
+- Notes ride along in `PortInfo.notes`, so they reach every open view
+  through the existing status pushes. `POST /api/ports/:id/notes` and
+  `DELETE /api/ports/:id/notes/:noteId` both go through `restRoutes.ts`'s
+  `broadcastPortChange` helper for the double broadcast.
+
 ## `src/transport/` — REST + WebSocket routes
 
 - `portInfo.ts::buildPortInfo`/`listAllPortInfo` are the assembly point that

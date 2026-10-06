@@ -44,7 +44,7 @@ export function registerConsoleRoute(fastify: FastifyInstance, deps: TransportDe
       client.send({ type: 'scrollback', dataBase64: scrollback.toString('base64') });
     }
 
-    const info = buildPortInfo(portId, deps.serialManager, deps.sessionHub, deps.portOverrides);
+    const info = buildPortInfo(portId, deps.serialManager, deps.sessionHub, deps.portOverrides, deps.portNotes);
     if (info) client.send({ type: 'status', port: info });
 
     socket.on('message', (raw: Buffer) => {

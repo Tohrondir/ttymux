@@ -128,7 +128,8 @@ hard-to-notice bug rather than a compile error.
   inventing a different "clear" sentinel.
 - **Two persisted, on-disk-by-default data sets, both bind-mounted in
   Docker:** `./logs` (raw per-port serial output, `LogWriter`, rotated) and
-  `./data` (currently just `port-overrides.json`, `PortOverridesStore`).
+  `./data` (`port-overrides.json`, `PortOverridesStore`, and
+  `port-notes.json`, `PortNotesStore`).
   Both are gitignored and survive `docker compose up -d --build` (rebuilding
   the image never touches host bind-mounted directories) as long as the
   compose command is always run from the same host directory. If a user

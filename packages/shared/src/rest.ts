@@ -1,5 +1,5 @@
 import type { AuthMode } from './auth.js';
-import type { PortInfo } from './ports.js';
+import type { PortInfo, PortNoteColor } from './ports.js';
 
 /**
  * Console I/O and control handoff go through the per-console WebSocket, not
@@ -10,6 +10,8 @@ import type { PortInfo } from './ports.js';
  *   GET   /api/ports/:id    -> GetPortResponse
  *   GET   /api/ports/:id/log -> raw log file download (Content-Disposition: attachment)
  *   PATCH /api/ports/:id    <- UpdatePortRequest -> GetPortResponse
+ *   POST  /api/ports/:id/notes <- CreatePortNoteRequest -> GetPortResponse
+ *   DELETE /api/ports/:id/notes/:noteId -> GetPortResponse
  *   GET   /api/server-info  -> GetServerInfoResponse
  *   GET   /api/health       -> { ok: true }
  */
@@ -26,6 +28,12 @@ export interface UpdatePortRequest {
   /** Omit to leave unchanged, `null` to clear back to the auto-discovered path/id. */
   name?: string | null;
   group?: string | null;
+}
+
+export interface CreatePortNoteRequest {
+  text: string;
+  color: PortNoteColor;
+  author?: string;
 }
 
 export interface GetServerInfoResponse {

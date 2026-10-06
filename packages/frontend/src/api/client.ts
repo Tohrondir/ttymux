@@ -2,6 +2,7 @@ import type {
   ApiErrorResponse,
   ConsoleClientMessage,
   ConsoleServerMessage,
+  CreatePortNoteRequest,
   EventsServerMessage,
   GetPortResponse,
   GetPortsResponse,
@@ -59,6 +60,20 @@ export const api = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
+    ).port;
+  },
+  async addNote(id: string, body: CreatePortNoteRequest): Promise<PortInfo> {
+    return (
+      await apiFetch<GetPortResponse>(`/api/ports/${encodeURIComponent(id)}/notes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+    ).port;
+  },
+  async deleteNote(id: string, noteId: string): Promise<PortInfo> {
+    return (
+      await apiFetch<GetPortResponse>(`/api/ports/${encodeURIComponent(id)}/notes/${encodeURIComponent(noteId)}`, { method: 'DELETE' })
     ).port;
   },
   async getServerInfo(): Promise<GetServerInfoResponse> {

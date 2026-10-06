@@ -88,6 +88,12 @@ xterm.js Terminal.write()
   search silently returns zero results with no visible error (a real
   regression once). If you ever see search "just doesn't find anything,"
   check this flag is still present before looking anywhere else.
+- The "Jump to bottom" button (`Terminal.tsx`'s `scrolledUp` state) listens
+  to the `.xterm-viewport` element's DOM `scroll` event, not just
+  `term.onScroll`: xterm.js 5.5 suppresses `onScroll` for user-initiated
+  viewport scrolling (mouse wheel, scrollbar) and only fires it for
+  programmatic scrolls, so relying on it alone means the button never
+  appears. `onWriteParsed` covers new output arriving while scrolled up.
 - Ctrl+F for search is wired via `onKeyDownCapture` on `ConsolePane`/
   `GridPane`'s wrapper div, **not** `onKeyDown`. xterm.js's own keydown
   handling on its internal hidden textarea consumes/stops the event before

@@ -17,6 +17,20 @@ export interface PortWriter {
   since: string;
 }
 
+/** Fixed palette so every client renders the same color for the same note. */
+export const PORT_NOTE_COLORS = ['blue', 'green', 'amber', 'red', 'purple'] as const;
+export type PortNoteColor = (typeof PORT_NOTE_COLORS)[number];
+
+/** A short message left on a port for whoever opens it next, e.g. "in use for flashing, back at 3pm". */
+export interface PortNote {
+  id: string;
+  text: string;
+  color: PortNoteColor;
+  author?: string;
+  /** ISO timestamp. */
+  createdAt: string;
+}
+
 export interface PortInfo {
   id: PortId;
   /** Current OS path. Volatile, may change across replugs (e.g. /dev/ttyUSB0, /dev/ttyACM0). */
@@ -40,4 +54,6 @@ export interface PortInfo {
   writer: PortWriter | null;
   /** ISO timestamp of last activity, meaningful when status is 'offline'. */
   lastSeenAt?: string;
+  /** Oldest first. */
+  notes: PortNote[];
 }

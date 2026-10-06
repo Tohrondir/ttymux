@@ -1,6 +1,17 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import type { ApiErrorResponse, GetPortResponse, GetPortsResponse, GetServerInfoResponse, HealthResponse, UpdatePortRequest } from '@ttymux/shared';
+import {
+  PORT_NOTE_COLORS,
+  type ApiErrorResponse,
+  type CreatePortNoteRequest,
+  type GetPortResponse,
+  type GetPortsResponse,
+  type GetServerInfoResponse,
+  type HealthResponse,
+  type PortId,
+  type PortInfo,
+  type UpdatePortRequest,
+} from '@ttymux/shared';
 import { buildPortInfo, listAllPortInfo } from './portInfo.js';
 import type { TransportDeps } from './types.js';
 
@@ -9,6 +20,12 @@ const VERSION = '0.1.0';
 const updatePortRequestSchema = z.object({
   name: z.string().max(200).nullable().optional(),
   group: z.string().max(200).nullable().optional(),
+});
+
+const createPortNoteRequestSchema = z.object({
+  text: z.string().trim().min(1, 'Note text is required').max(500),
+  color: z.enum(PORT_NOTE_COLORS),
+  author: z.string().trim().max(100).optional(),
 });
 
 export function registerRestRoutes(fastify: FastifyInstance, deps: TransportDeps): void {
@@ -33,11 +50,11 @@ export function registerRestRoutes(fastify: FastifyInstance, deps: TransportDeps
   }));
 
   fastify.get('/api/ports', async (): Promise<GetPortsResponse> => ({
-    ports: listAllPortInfo(deps.serialManager, deps.sessionHub, deps.portOverrides),
+    ports: listAllPortInfo(deps.serialManager, deps.sessionHub, deps.portOverrides, deps.portNotes),
   }));
 
   fastify.get<{ Params: { id: string } }>('/api/ports/:id', async (request, reply) => {
-    const port = buildPortInfo(request.params.id, deps.serialManager, deps.sessionHub, deps.portOverrides);
+    const port = buildPortInfo(request.params.id, deps.serialManager, deps.sessionHub, deps.portOverrides, deps.portNotes);
     if (!port) {
       const body: ApiErrorResponse = { error: 'not_found', message: `Unknown port id: ${request.params.id}` };
       await reply.code(404).send(body);
@@ -88,11 +105,56 @@ export function registerRestRoutes(fastify: FastifyInstance, deps: TransportDeps
 
     deps.portOverrides.update(id, parsed.data);
 
-    const port = buildPortInfo(id, deps.serialManager, deps.sessionHub, deps.portOverrides)!;
-    deps.sessionHub.broadcastStatus(id, port);
-    deps.broadcaster.broadcast({ type: 'portStatusChanged', port });
-
-    const body: GetPortResponse = { port };
+    const body: GetPortResponse = { port: broadcastPortChange(deps, id) };
     return body;
   });
+
+  fastify.post<{ Params: { id: string }; Body: CreatePortNoteRequest }>('/api/ports/:id/notes', async (request, reply) => {
+    const { id } = request.params;
+
+    if (!deps.serialManager.getDescriptor(id)) {
+      const body: ApiErrorResponse = { error: 'not_found', message: `Unknown port id: ${id}` };
+      await reply.code(404).send(body);
+      return;
+    }
+
+    const parsed = createPortNoteRequestSchema.safeParse(request.body);
+    if (!parsed.success) {
+      const body: ApiErrorResponse = { error: 'invalid_request', message: parsed.error.issues[0]?.message ?? 'Invalid request body' };
+      await reply.code(400).send(body);
+      return;
+    }
+
+    deps.portNotes.add(id, { ...parsed.data, author: parsed.data.author || undefined });
+
+    const body: GetPortResponse = { port: broadcastPortChange(deps, id) };
+    return body;
+  });
+
+  fastify.delete<{ Params: { id: string; noteId: string } }>('/api/ports/:id/notes/:noteId', async (request, reply) => {
+    const { id, noteId } = request.params;
+
+    if (!deps.serialManager.getDescriptor(id)) {
+      const body: ApiErrorResponse = { error: 'not_found', message: `Unknown port id: ${id}` };
+      await reply.code(404).send(body);
+      return;
+    }
+
+    if (!deps.portNotes.remove(id, noteId)) {
+      const body: ApiErrorResponse = { error: 'not_found', message: `Unknown note id: ${noteId}` };
+      await reply.code(404).send(body);
+      return;
+    }
+
+    const body: GetPortResponse = { port: broadcastPortChange(deps, id) };
+    return body;
+  });
+}
+
+/** Pushes a port's fresh PortInfo to both its console viewers and the dashboard-wide channel, so no open view goes stale. */
+function broadcastPortChange(deps: TransportDeps, portId: PortId): PortInfo {
+  const port = buildPortInfo(portId, deps.serialManager, deps.sessionHub, deps.portOverrides, deps.portNotes)!;
+  deps.sessionHub.broadcastStatus(portId, port);
+  deps.broadcaster.broadcast({ type: 'portStatusChanged', port });
+  return port;
 }

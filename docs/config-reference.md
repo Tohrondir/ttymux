@@ -121,7 +121,8 @@ persistence:
 
 Where renames/groups made from the sidebar UI (see `PATCH /api/ports/:id`
 below) are saved, as a small JSON file (`port-overrides.json`), so they
-survive a restart. This is separate from `ports:` below on purpose: `ports:`
+survive a restart. Port notes left from the console header are saved here
+too, in `port-notes.json`. This is separate from `ports:` below on purpose: `ports:`
 is declarative config you hand-edit, while this directory is state the
 server writes itself. Keeping them apart means a UI rename can never rewrite
 (and reformat, losing your comments) this config file.

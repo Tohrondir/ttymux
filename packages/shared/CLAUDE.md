@@ -21,7 +21,9 @@ duplicate, that's a sign the type belongs here and doesn't yet.
 - `index.ts` — barrel, re-exports everything below. This is the entire
   public surface of `@ttymux/shared`.
 - `ports.ts` — `PortId` (just `string`), `PortConnectionStatus`
-  (`'online'|'offline'|'connecting'|'error'`), `PortWriter`, `PortInfo` (the
+  (`'online'|'offline'|'connecting'|'error'`), `PortWriter`,
+  `PortNote`/`PortNoteColor`/`PORT_NOTE_COLORS` (port notes; the color list
+  is also the backend's zod enum and the frontend's palette keys), `PortInfo` (the
   big composite DTO the backend assembles per port — see
   `packages/backend/CLAUDE.md`'s note on `buildPortInfo`). **The doc comment
   here describing port-id priority is a simplified subset of the real logic

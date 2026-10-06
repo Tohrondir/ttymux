@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { useConsoleSocket } from '../hooks/useConsoleSocket.js';
+import { NOTE_COLOR_META } from '../utils/noteColors.js';
 import { StatusDot } from './StatusDot.js';
 import { Terminal, type TerminalHandle } from './Terminal.js';
 import { TerminalSearchBar } from './TerminalSearchBar.js';
@@ -68,6 +69,17 @@ export function GridPane({ portId, onRemove, highlightEnabled, lurkerMode }: Gri
           </button>
         </div>
       </div>
+
+      {port && port.notes.length > 0 && (
+        <ul className="max-h-16 space-y-0.5 overflow-y-auto border-b border-line px-2 py-1 text-[11px]">
+          {port.notes.map((note) => (
+            <li key={note.id} className="flex min-w-0 items-center gap-1.5" title={note.author ? `${note.text} (${note.author})` : note.text}>
+              <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${NOTE_COLOR_META[note.color].dot}`} />
+              <span className="truncate text-paper">{note.text}</span>
+            </li>
+          ))}
+        </ul>
+      )}
 
       <div className="relative min-h-0 flex-1 p-1">
         <Terminal ref={terminalRef} readOnly={!canType} onInput={sendInput} highlightEnabled={highlightEnabled} />

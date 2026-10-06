@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { FitAddon } from '@xterm/addon-fit';
 import { SearchAddon, type ISearchOptions } from '@xterm/addon-search';
 import { Terminal as XtermTerminal } from '@xterm/xterm';
@@ -47,6 +47,8 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
   onInputRef.current = onInput;
   const highlightEnabledRef = useRef(highlightEnabled);
   highlightEnabledRef.current = highlightEnabled;
+  /** True while the viewport is scrolled up away from the newest output. */
+  const [scrolledUp, setScrolledUp] = useState(false);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -76,6 +78,18 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
       highlighterRef.current?.notifyLocalInput();
     });
 
+    // Three triggers can change whether we're scrolled up: the user scrolling
+    // (xterm suppresses onScroll for that, so listen to the viewport element's
+    // own DOM scroll event; xterm's listener on it was registered first in
+    // open(), so viewportY is already updated when ours runs), programmatic
+    // scrolls (onScroll), and new output growing the buffer underneath a
+    // viewport that stays put while scrolled up (onWriteParsed).
+    const updateScrolledUp = () => setScrolledUp(term.buffer.active.viewportY < term.buffer.active.baseY);
+    const viewportElement = container.querySelector('.xterm-viewport');
+    viewportElement?.addEventListener('scroll', updateScrolledUp);
+    const scrollDisposable = term.onScroll(updateScrolledUp);
+    const writeDisposable = term.onWriteParsed(updateScrolledUp);
+
     const resizeObserver = new ResizeObserver(() => fit.fit());
     resizeObserver.observe(container);
 
@@ -88,6 +102,9 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
       highlighterRef.current = null;
       searchAddonRef.current = null;
       dataDisposable.dispose();
+      viewportElement?.removeEventListener('scroll', updateScrolledUp);
+      scrollDisposable.dispose();
+      writeDisposable.dispose();
       resizeObserver.disconnect();
       term.dispose();
       termRef.current = null;
@@ -130,5 +147,22 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     [],
   );
 
-  return <div ref={containerRef} className="terminal-glass h-full w-full [&_.xterm]:h-full [&_.xterm-viewport]:!bg-transparent" />;
+  return (
+    <div className="relative h-full w-full">
+      <div ref={containerRef} className="terminal-glass h-full w-full [&_.xterm]:h-full [&_.xterm-viewport]:!bg-transparent" />
+      {scrolledUp && (
+        <button
+          type="button"
+          onClick={() => {
+            termRef.current?.scrollToBottom();
+            termRef.current?.focus();
+          }}
+          title="Scroll to the newest output"
+          className="absolute bottom-3 right-5 z-10 rounded-md border border-signal-dim bg-panel/90 px-2.5 py-1 text-xs text-signal shadow-lg transition-colors hover:text-paper"
+        >
+          Jump to bottom &darr;
+        </button>
+      )}
+    </div>
+  );
 });

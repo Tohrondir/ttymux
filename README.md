@@ -37,6 +37,13 @@ where a serial console is still the only way in.
 - **Search scrollback**: Ctrl+F opens an in-terminal search with
   next/previous and a match count, without triggering the browser's own
   find bar.
+- **Jump to bottom**: scroll up through the history and a button appears to
+  get you back to the newest output in one click.
+- **Port notes**: leave a short, color-coded message on a port for whoever
+  opens it next ("using this for flashing until 3pm", "baud must stay at
+  9600"). Notes show up live for everyone in the console header, on grid
+  tiles, and as colored dots in the sidebar, and are saved on the server so
+  they survive a restart.
 - **Disk logging with rotation**, per port, path configurable, downloadable
   straight from the console header (concatenates any rotated history into
   one file). The on-screen scrollback is also reseeded from this history on

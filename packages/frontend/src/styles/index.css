@@ -17,6 +17,12 @@
   --color-status-connecting: #e8a33d;
   --color-status-offline: #5b6864;
   --color-status-error: #e5484d;
+
+  --color-note-blue: #5b9cf5;
+  --color-note-green: #3ddc84;
+  --color-note-amber: #e8a33d;
+  --color-note-red: #e5484d;
+  --color-note-purple: #b18cf2;
 }
 
 @layer base {
