@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -117,6 +117,29 @@ describe('LogWriter log file listing/streaming', () => {
       writeFileSync(join(dir, 'p1.log'), 'hello');
       const writer = new LogWriter({ enabled: true, directory: dir, maxSizeMb: 10, maxFiles: 5 });
       expect(writer.readTail('p1', 0)).toEqual(Buffer.alloc(0));
+    });
+  });
+
+  describe('rotation', () => {
+    it('rotates during a synchronous burst of appends and caps the number of files', () => {
+      // maxSizeMb of 10_000 bytes, appended 100 times in one tick with no chance for async I/O to settle.
+      const maxBytes = 10_000;
+      const writer = new LogWriter({ enabled: true, directory: dir, maxSizeMb: maxBytes / (1024 * 1024), maxFiles: 3 });
+      for (let i = 0; i < 100; i++) writer.append('p1', Buffer.alloc(1000, 0x41));
+      writer.closeAll();
+
+      expect(readdirSync(dir).sort()).toEqual(['p1.log', 'p1.log.1', 'p1.log.2', 'p1.log.3']);
+      for (const name of readdirSync(dir)) {
+        expect(statSync(join(dir, name)).size).toBeLessThanOrEqual(maxBytes + 1000);
+      }
+    });
+
+    it('keeps data in chronological order across rotated files', () => {
+      const writer = new LogWriter({ enabled: true, directory: dir, maxSizeMb: 4 / (1024 * 1024), maxFiles: 5 });
+      for (const part of ['aaaa', 'bbbb', 'cccc']) writer.append('p1', Buffer.from(part));
+      writer.closeAll();
+
+      expect(writer.readTail('p1', 100).toString()).toBe('aaaabbbbcccc');
     });
   });
 });

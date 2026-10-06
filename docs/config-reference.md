@@ -79,6 +79,13 @@ after its stable id (or path-derived id, with `/`, `\`, and `:` replaced by
 `_`), e.g. `logs/usb-FTDI_FT232R_A12BC3XY-if00.log`, rotating to `.log.1`,
 `.log.2`, etc. up to `maxFiles`.
 
+`maxSizeMb` is the size of each file and `maxFiles` is the number of rotated
+files kept next to the current one, so the most disk a single port can use is
+`maxSizeMb * (maxFiles + 1)`: 60 MB per port with the defaults above. Lower
+either value to shrink that, e.g. `maxSizeMb: 2` and `maxFiles: 2` caps each
+port at 6 MB. The download-log button streams all of these files, so it gets
+smaller too.
+
 ## `scrollback`
 
 ```yaml

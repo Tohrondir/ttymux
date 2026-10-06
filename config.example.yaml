@@ -33,6 +33,7 @@ auth:
   #     passwordHash: "scrypt:<salt>:<hash>"
 
 logging:
+  # Disk use per port is at most maxSizeMb * (maxFiles + 1).
   enabled: true
   directory: ./logs
   maxSizeMb: 10

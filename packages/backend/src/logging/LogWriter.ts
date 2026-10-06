@@ -1,15 +1,14 @@
 import {
   closeSync,
   createReadStream,
-  createWriteStream,
   existsSync,
+  fstatSync,
   mkdirSync,
   openSync,
   readSync,
   renameSync,
   statSync,
-  unlinkSync,
-  type WriteStream,
+  writeSync,
 } from 'node:fs';
 import { join } from 'node:path';
 import { Readable } from 'node:stream';
@@ -23,12 +22,20 @@ export interface LogWriterOptions {
 }
 
 interface LogEntry {
-  stream: WriteStream;
+  fd: number;
   size: number;
   filePath: string;
 }
 
-/** Raw per-port disk logging with size-based rotation, e.g. port.log, port.log.1, port.log.2, ... */
+/**
+ * Raw per-port disk logging with size-based rotation, e.g. port.log, port.log.1, port.log.2, ...
+ *
+ * Writes are synchronous on purpose: with an async WriteStream, a burst of
+ * appends could trigger rotate() before the stream had even opened its file,
+ * so the rename found nothing and every write kept landing in the same
+ * ever-growing port.log. Serial throughput is low enough that blocking
+ * appends cost nothing noticeable.
+ */
 export class LogWriter {
   private readonly entries = new Map<PortId, LogEntry>();
   private readonly maxBytes: number;
@@ -43,7 +50,7 @@ export class LogWriter {
     let entry = this.entries.get(portId);
     if (!entry) entry = this.openEntry(portId);
 
-    entry.stream.write(chunk);
+    writeSync(entry.fd, chunk);
     entry.size += chunk.length;
 
     if (entry.size >= this.maxBytes) {
@@ -54,7 +61,7 @@ export class LogWriter {
   close(portId: PortId): void {
     const entry = this.entries.get(portId);
     if (!entry) return;
-    entry.stream.end();
+    closeSync(entry.fd);
     this.entries.delete(portId);
   }
 
@@ -128,22 +135,19 @@ export class LogWriter {
   private openEntry(portId: PortId): LogEntry {
     mkdirSync(this.opts.directory, { recursive: true });
     const filePath = join(this.opts.directory, this.getLogFileName(portId));
-    const size = existsSync(filePath) ? statSync(filePath).size : 0;
-    const entry: LogEntry = { stream: createWriteStream(filePath, { flags: 'a' }), size, filePath };
+    const fd = openSync(filePath, 'a');
+    const entry: LogEntry = { fd, size: fstatSync(fd).size, filePath };
     this.entries.set(portId, entry);
     return entry;
   }
 
   private rotate(portId: PortId, entry: LogEntry): void {
-    entry.stream.end();
-    this.entries.delete(portId);
+    this.close(portId);
 
+    // renameSync overwrites the destination, so the oldest (.maxFiles) file is dropped here.
     for (let i = this.opts.maxFiles - 1; i >= 1; i--) {
       const src = `${entry.filePath}.${i}`;
-      if (!existsSync(src)) continue;
-      const dst = `${entry.filePath}.${i + 1}`;
-      if (i + 1 > this.opts.maxFiles) unlinkSync(src);
-      else renameSync(src, dst);
+      if (existsSync(src)) renameSync(src, `${entry.filePath}.${i + 1}`);
     }
     if (existsSync(entry.filePath)) renameSync(entry.filePath, `${entry.filePath}.1`);
 
