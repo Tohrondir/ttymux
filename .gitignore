@@ -9,6 +9,8 @@ build/
 coverage/
 config.yaml
 config.yml
+ttymux.config.yaml
+ttymux.config.yml
 *.tsbuildinfo
 /logs/
 /data/
