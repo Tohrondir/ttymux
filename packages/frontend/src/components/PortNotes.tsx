@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { PortNote, PortNoteColor } from '@ttymux/shared';
 import { api } from '../api/client.js';
 import { formatNoteAge, NOTE_COLOR_META, NOTE_COLOR_ORDER } from '../utils/noteColors.js';
@@ -12,10 +12,12 @@ export interface PortNotesProps {
   /** Remembered name to sign new notes with. */
   author: string;
   onAuthorChange: (author: string) => void;
+  /** Tighter padding and a height cap, for grid tiles. Cards and form look the same either way. */
+  dense?: boolean;
 }
 
 /** Strip of color-coded notes under the console header, plus the form to leave a new one. Renders nothing when empty and not adding. */
-export function PortNotes({ portId, notes, adding, onAddingChange, author, onAuthorChange }: PortNotesProps) {
+export function PortNotes({ portId, notes, adding, onAddingChange, author, onAuthorChange, dense = false }: PortNotesProps) {
   const [error, setError] = useState<string | null>(null);
 
   async function deleteNote(noteId: string) {
@@ -30,7 +32,7 @@ export function PortNotes({ portId, notes, adding, onAddingChange, author, onAut
   if (notes.length === 0 && !adding && !error) return null;
 
   return (
-    <div className="flex flex-wrap items-start gap-2 border-b border-line px-4 py-2">
+    <div className={`flex flex-wrap items-start gap-2 border-b border-line ${dense ? 'max-h-40 overflow-y-auto px-2 py-1.5' : 'px-4 py-2'}`}>
       {notes.map((note) => (
         <NoteCard key={note.id} note={note} onDelete={() => deleteNote(note.id)} />
       ))}
@@ -85,6 +87,7 @@ function NoteForm({ portId, author, onAuthorChange, onDone, onError }: NoteFormP
   const [text, setText] = useState('');
   const [color, setColor] = useState<PortNoteColor>('blue');
   const [saving, setSaving] = useState(false);
+  const textInputRef = useRef<HTMLInputElement | null>(null);
 
   async function submit() {
     const trimmed = text.trim();
@@ -125,7 +128,11 @@ function NoteForm({ portId, author, onAuthorChange, onDone, onError }: NoteFormP
               aria-checked={color === option}
               aria-label={meta.label}
               title={meta.label}
-              onClick={() => setColor(option)}
+              onClick={() => {
+                setColor(option);
+                // Back to the message so Enter submits instead of re-pressing this swatch.
+                textInputRef.current?.focus();
+              }}
               className={`h-4 w-4 rounded-full ${meta.dot} ${color === option ? 'ring-2 ring-paper ring-offset-1 ring-offset-panel' : 'opacity-60 hover:opacity-100'}`}
             />
           );
@@ -133,6 +140,7 @@ function NoteForm({ portId, author, onAuthorChange, onDone, onError }: NoteFormP
         <span className="ml-1 w-16 text-[11px] text-fog">{NOTE_COLOR_META[color].label}</span>
       </div>
       <input
+        ref={textInputRef}
         autoFocus
         value={text}
         onChange={(event) => setText(event.target.value)}

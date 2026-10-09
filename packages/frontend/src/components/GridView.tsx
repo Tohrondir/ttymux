@@ -9,9 +9,11 @@ export interface GridViewProps {
   onRemoveFromSession: (id: string) => void;
   highlightEnabled: boolean;
   lurkerMode: boolean;
+  noteAuthor: string;
+  onNoteAuthorChange: (author: string) => void;
 }
 
-export function GridView({ sessionPortIds, onRemoveFromSession, highlightEnabled, lurkerMode }: GridViewProps) {
+export function GridView({ sessionPortIds, onRemoveFromSession, highlightEnabled, lurkerMode, noteAuthor, onNoteAuthorChange }: GridViewProps) {
   const [columns, setColumns] = useLocalStorageState<ColumnOption>('ttymux.gridColumns', 'auto');
 
   return (
@@ -53,7 +55,15 @@ export function GridView({ sessionPortIds, onRemoveFromSession, highlightEnabled
             }}
           >
             {sessionPortIds.map((id) => (
-              <GridPane key={id} portId={id} onRemove={onRemoveFromSession} highlightEnabled={highlightEnabled} lurkerMode={lurkerMode} />
+              <GridPane
+                key={id}
+                portId={id}
+                onRemove={onRemoveFromSession}
+                highlightEnabled={highlightEnabled}
+                lurkerMode={lurkerMode}
+                noteAuthor={noteAuthor}
+                onNoteAuthorChange={onNoteAuthorChange}
+              />
             ))}
           </div>
         )}

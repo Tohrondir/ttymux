@@ -42,6 +42,8 @@ export default function App() {
             onRemoveFromSession={session.removeFromSession}
             highlightEnabled={highlightEnabled}
             lurkerMode={lurkerMode}
+            noteAuthor={noteAuthor}
+            onNoteAuthorChange={setNoteAuthor}
           />
         )}
       </main>

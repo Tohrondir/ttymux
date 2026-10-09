@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { useConsoleSocket } from '../hooks/useConsoleSocket.js';
-import { NOTE_COLOR_META } from '../utils/noteColors.js';
+import { PortNotes } from './PortNotes.js';
 import { StatusDot } from './StatusDot.js';
 import { Terminal, type TerminalHandle } from './Terminal.js';
 import { TerminalSearchBar } from './TerminalSearchBar.js';
@@ -11,11 +11,14 @@ export interface GridPaneProps {
   onRemove: (id: string) => void;
   highlightEnabled: boolean;
   lurkerMode: boolean;
+  noteAuthor: string;
+  onNoteAuthorChange: (author: string) => void;
 }
 
-export function GridPane({ portId, onRemove, highlightEnabled, lurkerMode }: GridPaneProps) {
+export function GridPane({ portId, onRemove, highlightEnabled, lurkerMode, noteAuthor, onNoteAuthorChange }: GridPaneProps) {
   const terminalRef = useRef<TerminalHandle | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [addingNote, setAddingNote] = useState(false);
 
   const { connected, port, writeToken, isWriter, controlDeniedReason, requestControl, setFreeForAll, sendInput } = useConsoleSocket(
     portId,
@@ -60,6 +63,17 @@ export function GridPane({ portId, onRemove, highlightEnabled, lurkerMode }: Gri
           />
           <button
             type="button"
+            onClick={() => setAddingNote((adding) => !adding)}
+            aria-pressed={addingNote}
+            title="Leave a message on this port for everyone else who opens it"
+            className={`shrink-0 rounded border px-1.5 py-0.5 transition-colors ${
+              addingNote ? 'border-signal-dim text-paper' : 'border-line text-fog hover:border-signal-dim hover:text-paper'
+            }`}
+          >
+            Add note
+          </button>
+          <button
+            type="button"
             onClick={() => onRemove(portId)}
             aria-label="Remove from grid view"
             title="Remove from grid view"
@@ -70,16 +84,15 @@ export function GridPane({ portId, onRemove, highlightEnabled, lurkerMode }: Gri
         </div>
       </div>
 
-      {port && port.notes.length > 0 && (
-        <ul className="max-h-16 space-y-0.5 overflow-y-auto border-b border-line px-2 py-1 text-[11px]">
-          {port.notes.map((note) => (
-            <li key={note.id} className="flex min-w-0 items-center gap-1.5" title={note.author ? `${note.text} (${note.author})` : note.text}>
-              <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${NOTE_COLOR_META[note.color].dot}`} />
-              <span className="truncate text-paper">{note.text}</span>
-            </li>
-          ))}
-        </ul>
-      )}
+      <PortNotes
+        portId={portId}
+        notes={port?.notes ?? []}
+        adding={addingNote}
+        onAddingChange={setAddingNote}
+        author={noteAuthor}
+        onAuthorChange={onNoteAuthorChange}
+        dense
+      />
 
       <div className="relative min-h-0 flex-1 p-1">
         <Terminal ref={terminalRef} readOnly={!canType} onInput={sendInput} highlightEnabled={highlightEnabled} />

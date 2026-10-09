@@ -274,7 +274,9 @@ console-header feature, decide deliberately whether it belongs in both or
 just `ConsolePane` (the pattern so far: viewing controls that only make
 sense with one console in focus, like search or settings, stay
 `ConsolePane`-only; controls that matter regardless of how many consoles are
-visible, like the write-token banner, go in both).
+visible, like the write-token banner, go in both). Port notes are in both,
+through the same `PortNotes` component (`dense` only tightens padding and caps
+the height for tiles); keep the two views' notes looking identical.
 
 Console header layout (in `ConsolePane`) is grouped into three visually
 separated clusters, left to right: **status** (online dot, viewer count,
