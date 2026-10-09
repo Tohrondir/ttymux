@@ -94,6 +94,15 @@ xterm.js Terminal.write()
   viewport scrolling (mouse wheel, scrollbar) and only fires it for
   programmatic scrolls, so relying on it alone means the button never
   appears. `onWriteParsed` covers new output arriving while scrolled up.
+- **The page itself must never scroll**, only the terminal and explicit
+  scroll areas (sidebar list, grid area, settings panel). `index.css` locks
+  `html`/`body`/`#root` to `overflow: hidden`, and the panes and the
+  `Terminal` wrapper are `overflow-hidden` too. The wrapper matters on its
+  own: xterm's hidden `.xterm-helper-textarea` follows the cursor and can
+  poke ~50px below the last row (reliably so once the notes strip shrinks
+  the terminal), which used to stretch the page. Header control rows use
+  `flex-wrap` rather than `shrink-0` so they wrap on narrow widths instead
+  of pushing the page wider or overflowing under the sidebar.
 - Ctrl+F for search is wired via `onKeyDownCapture` on `ConsolePane`/
   `GridPane`'s wrapper div, **not** `onKeyDown`. xterm.js's own keydown
   handling on its internal hidden textarea consumes/stops the event before

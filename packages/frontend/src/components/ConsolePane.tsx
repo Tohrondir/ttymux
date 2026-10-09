@@ -57,7 +57,7 @@ export function ConsolePane({ portId, highlightEnabled, onToggleHighlight, lurke
 
   return (
     <div
-      className="flex h-screen flex-col bg-ink"
+      className="flex h-screen flex-col overflow-hidden bg-ink"
       onKeyDownCapture={(event) => {
         if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'f') {
           event.preventDefault();
@@ -65,13 +65,13 @@ export function ConsolePane({ portId, highlightEnabled, onToggleHighlight, lurke
         }
       }}
     >
-      <header className="flex items-center justify-between gap-4 border-b border-line px-4 py-3">
+      <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line px-4 py-3">
         <div className="min-w-0">
           <h1 className="truncate text-sm font-medium text-paper">{port?.friendlyName ?? port?.path ?? portId}</h1>
           <p className="truncate font-mono text-xs text-fog">{portId}</p>
         </div>
-        <div className="flex flex-wrap shrink-0 items-center justify-end gap-x-4 gap-y-2 text-xs text-fog">
-          <div className="flex shrink-0 items-center gap-3">
+        <div className="flex min-w-0 flex-wrap items-center justify-end gap-x-4 gap-y-2 text-xs text-fog">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             {port && <StatusDot status={port.status} hasWriter={port.writer !== null} />}
             <span title={viewers.map((v) => v.displayName ?? 'Anonymous').join(', ')}>
               {viewers.length} {viewers.length === 1 ? 'viewer' : 'viewers'}
@@ -91,7 +91,7 @@ export function ConsolePane({ portId, highlightEnabled, onToggleHighlight, lurke
 
           <span className="h-4 w-px bg-line" aria-hidden="true" />
 
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             {downloadError && <span className="text-status-error">{downloadError}</span>}
             <button
               type="button"
@@ -148,7 +148,7 @@ export function ConsolePane({ portId, highlightEnabled, onToggleHighlight, lurke
         onAuthorChange={onNoteAuthorChange}
       />
 
-      <div className="relative min-h-0 flex-1 p-2">
+      <div className="relative min-h-0 flex-1 overflow-hidden p-2">
         <Terminal ref={terminalRef} readOnly={!canType} onInput={sendInput} highlightEnabled={highlightEnabled} />
         {searchOpen && <TerminalSearchBar terminalRef={terminalRef} onClose={() => setSearchOpen(false)} />}
         <SettingsPanel

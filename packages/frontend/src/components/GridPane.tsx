@@ -94,7 +94,7 @@ export function GridPane({ portId, onRemove, highlightEnabled, lurkerMode, noteA
         dense
       />
 
-      <div className="relative min-h-0 flex-1 p-1">
+      <div className="relative min-h-0 flex-1 overflow-hidden p-1">
         <Terminal ref={terminalRef} readOnly={!canType} onInput={sendInput} highlightEnabled={highlightEnabled} />
         {searchOpen && <TerminalSearchBar terminalRef={terminalRef} onClose={() => setSearchOpen(false)} />}
       </div>

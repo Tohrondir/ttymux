@@ -14,7 +14,7 @@ export default function App() {
   const [noteAuthor, setNoteAuthor] = useLocalStorageState('ttymux.noteAuthor', '');
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen overflow-hidden">
       <Sidebar
         selectedPortId={selectedPortId}
         gridActive={route.name === 'grid'}

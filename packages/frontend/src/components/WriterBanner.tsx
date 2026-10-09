@@ -11,7 +11,7 @@ export interface WriterBannerProps {
 /** Compact control-state group meant to sit inline in a header row, not as a full-width bar of its own. */
 export function WriterBanner({ writeToken, isWriter, deniedReason, onRequestControl, onToggleFreeForAll }: WriterBannerProps) {
   return (
-    <div className="flex shrink-0 items-center gap-2">
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
       {writeToken.freeForAll ? (
         <span className="text-fog">Free-for-all</span>
       ) : writeToken.holder ? (

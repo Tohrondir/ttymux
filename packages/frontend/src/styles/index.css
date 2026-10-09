@@ -30,6 +30,14 @@
     color-scheme: dark;
   }
 
+  /* The page itself never scrolls; only the terminal and explicit scroll areas inside it do. */
+  html,
+  body,
+  #root {
+    height: 100%;
+    overflow: hidden;
+  }
+
   body {
     @apply bg-ink text-paper font-sans antialiased;
   }

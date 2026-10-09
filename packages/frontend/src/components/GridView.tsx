@@ -17,7 +17,7 @@ export function GridView({ sessionPortIds, onRemoveFromSession, highlightEnabled
   const [columns, setColumns] = useLocalStorageState<ColumnOption>('ttymux.gridColumns', 'auto');
 
   return (
-    <div className="flex h-screen flex-col bg-panel">
+    <div className="flex h-screen flex-col overflow-hidden bg-panel">
       <header className="flex items-center justify-between gap-4 border-b border-line px-4 py-3">
         <div>
           <h1 className="text-sm font-medium text-paper">Grid view</h1>

@@ -148,7 +148,8 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
   );
 
   return (
-    <div className="relative h-full w-full">
+    // overflow-hidden: xterm's hidden input textarea follows the cursor and pokes below the last row, which would otherwise stretch the page.
+    <div className="relative h-full w-full overflow-hidden">
       <div ref={containerRef} className="terminal-glass h-full w-full [&_.xterm]:h-full [&_.xterm-viewport]:!bg-transparent" />
       {scrolledUp && (
         <button
