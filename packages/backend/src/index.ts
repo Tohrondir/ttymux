@@ -6,7 +6,7 @@ import { loadConfig } from './config/loadConfig.js';
 import { startServer } from './server.js';
 
 const program = new Command();
-program.name('ttymux').description('Multi-user web dashboard for serial console connections').version('0.1.0');
+program.name('ttymux').description('Multi-user web dashboard for serial console connections').version('0.2.0');
 
 program
   .command('start', { isDefault: true })

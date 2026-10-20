@@ -15,7 +15,7 @@ import {
 import { buildPortInfo, listAllPortInfo } from './portInfo.js';
 import type { TransportDeps } from './types.js';
 
-const VERSION = '0.1.0';
+const VERSION = '0.2.0';
 
 const updatePortRequestSchema = z.object({
   name: z.string().max(200).nullable().optional(),

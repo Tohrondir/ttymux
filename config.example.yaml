@@ -52,7 +52,7 @@ discovery:
   includeLegacyPorts: false
 
 persistence:
-  # Where renames/groups made from the UI (not this file) are saved as a
+  # Where renames/groups and port notes made from the UI (not this file) are saved as a
   # small JSON file, so they survive a restart. Mount this as a volume in
   # Docker if you want renames to persist across container recreation, e.g.
   # in docker-compose.yml: "./data:/app/data".

@@ -1,6 +1,6 @@
 {
   "name": "ttymux",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "license": "MIT",
   "description": "ttymux backend: serial port discovery, session management, REST + WebSocket transport",
@@ -21,7 +21,7 @@
   "dependencies": {
     "@fastify/static": "^10.1.2",
     "@fastify/websocket": "^11.0.2",
-    "@ttymux/shared": "0.1.0",
+    "@ttymux/shared": "0.2.0",
     "commander": "^12.1.0",
     "fastify": "^5.10.0",
     "js-yaml": "^4.1.0",
